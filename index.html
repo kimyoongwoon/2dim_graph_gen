@@ -52,7 +52,8 @@
             <div class="controls">
                 <label><strong>데이터 개수:</strong></label>
                 <input type="number" id="dataCount" value="100" min="1" max="10000">
-                <button onclick="generateData()">데이터 생성</button>
+                <!-- 🔥 onclick 제거, id 추가 -->
+                <button id="generateDataBtn">데이터 생성</button>
             </div>
         </div>
 
@@ -70,7 +71,8 @@
                 </table>
             </div>
             <div class="controls">
-                <button onclick="goToVisualization()" id="goToChartBtn" disabled>차트 생성하러 가기</button>
+                <!-- 🔥 onclick 제거, id 추가 -->
+                <button id="goToChartBtn" disabled>차트 생성하러 가기</button>
             </div>
         </div>
     </div>

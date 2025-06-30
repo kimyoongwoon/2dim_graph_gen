@@ -1,48 +1,51 @@
-// ============================================================================
-// chart_gen/unified/chart_generator.js - ¸ŞÀÎ Â÷Æ® »ı¼º ÇÔ¼ö
+ï»¿// ============================================================================
+// chart_gen/unified/chart_generator.js - í†µí•© ì°¨íŠ¸ ìƒì„± í•¨ìˆ˜ (ìˆ˜ì •ë¨)
 // ============================================================================
 
 import { processDataForChart } from './data_processor_unified.js';
 import { ChartWrapper } from './chart_wrapper.js';
 import { createVisualization } from '../chart_factory.js';
-import { prepareDataForChart } from '../data_processor.js';
 import { showError_chart } from './error_handler.js';
 
 /**
- * ÅëÇÕ Â÷Æ® »ı¼º ÇÔ¼ö
- * @param {Array} rawData - ¿ø½Ã µ¥ÀÌÅÍ
- * @param {Object} config - Â÷Æ® ¼³Á¤ {type, dataMapping, options}
- * @param {HTMLElement} containerElement - ÄÁÅ×ÀÌ³Ê ¿¤¸®¸ÕÆ®
- * @returns {ChartWrapper} Â÷Æ® ·¡ÆÛ °´Ã¼
+ * í†µí•© ì°¨íŠ¸ ìƒì„± í•¨ìˆ˜
+ * @param {Array} rawData - ì›ì‹œ ë°ì´í„°
+ * @param {Object} config - ì°¨íŠ¸ ì„¤ì • {type, dataMapping, options}
+ * @param {HTMLElement} containerElement - ì»¨í…Œì´ë„ˆ ì—˜ë¦¬ë¨¼íŠ¸
+ * @returns {ChartWrapper} ì°¨íŠ¸ ë˜í¼ ê°ì²´
  */
 export function generateChart(rawData, config, containerElement) {
-    console.log('[CHART_GENERATOR] Â÷Æ® »ı¼º ½ÃÀÛ');
-    console.log('[CHART_GENERATOR] ¼³Á¤:', config);
+    console.log('[CHART_GENERATOR] ì°¨íŠ¸ ìƒì„± ì‹œì‘');
+    console.log('[CHART_GENERATOR] ì„¤ì •:', config);
 
     try {
-        // ÀÔ·Â °ËÁõ
+        // ì…ë ¥ ê²€ì¦
         if (!rawData || !Array.isArray(rawData) || rawData.length === 0) {
-            throw new Error('À¯È¿ÇÑ µ¥ÀÌÅÍ°¡ ¾ø½À´Ï´Ù');
+            throw new Error('ìœ íš¨í•œ ë°ì´í„°ê°€ ì—†ìŠµë‹ˆë‹¤');
         }
 
         if (!config || !config.type || !config.dataMapping) {
-            throw new Error('Â÷Æ® ¼³Á¤ÀÌ ¿Ã¹Ù¸£Áö ¾Ê½À´Ï´Ù');
+            throw new Error('ì°¨íŠ¸ ì„¤ì •ì´ ì˜¬ë°”ë¥´ì§€ ì•ŠìŠµë‹ˆë‹¤');
         }
 
         if (!containerElement) {
-            throw new Error('ÄÁÅ×ÀÌ³Ê ¿¤¸®¸ÕÆ®°¡ ÇÊ¿äÇÕ´Ï´Ù');
+            throw new Error('ì»¨í…Œì´ë„ˆ ì—˜ë¦¬ë¨¼íŠ¸ê°€ í•„ìš”í•©ë‹ˆë‹¤');
         }
 
-        // 1´Ü°è: µ¥ÀÌÅÍ Ã³¸® (µ¶¸³Àû)
+        // 1ë‹¨ê³„: ë°ì´í„° ì²˜ë¦¬ (unified ì‹œìŠ¤í…œ)
         const processedResult = processDataForChart(rawData, config.dataMapping);
         const { data: chartData, metadata } = processedResult;
 
-        // 2´Ü°è: ±âÁ¸ ½Ã½ºÅÛ¿ë µ¥ÀÌÅÍ ÁØºñ
+        console.log('[CHART_GENERATOR] ì²˜ë¦¬ëœ ë°ì´í„°:', {
+            dataCount: chartData.length,
+            metadata: metadata
+        });
+
+        // 2ë‹¨ê³„: ê¸°ì¡´ ì°¨íŠ¸ ì‹œìŠ¤í…œìš© ë°ì´í„°ì…‹ êµ¬ì„±
         const dataset = {
             name: `${config.type} Chart`,
-            dimension: metadata.dim,
             axes: metadata.axes,
-            dataType: `${metadata.dim}D`
+            visualizationTypes: [{ type: config.type }]
         };
 
         const vizType = {
@@ -50,16 +53,9 @@ export function generateChart(rawData, config, containerElement) {
             type: config.type
         };
 
-        // ±âÁ¸ prepareDataForChart ÇÔ¼ö »ç¿ë
-        const preparedData = prepareDataForChart(
-            chartData.map(point => [
-                metadata.axes.map(axis => point[axis.name] || 0),
-                point[metadata.axes[0]?.name] || 0
-            ]),
-            metadata.axes
-        );
+        console.log('[CHART_GENERATOR] ë°ì´í„°ì…‹:', dataset);
 
-        // 3´Ü°è: Äµ¹ö½º »ı¼º ¹× ¼³Á¤
+        // 3ë‹¨ê³„: ìº”ë²„ìŠ¤ ìƒì„± ë° ì„¤ì •
         const canvas = document.createElement('canvas');
         canvas.style.width = '100%';
         canvas.style.height = '100%';
@@ -67,44 +63,46 @@ export function generateChart(rawData, config, containerElement) {
         canvas.style.top = '0';
         canvas.style.left = '0';
 
-        // ÄÁÅ×ÀÌ³Ê ½ºÅ¸ÀÏ ¼³Á¤
+        // ì»¨í…Œì´ë„ˆ ìŠ¤íƒ€ì¼ ì„¤ì •
         containerElement.style.position = 'relative';
         containerElement.style.overflow = 'hidden';
         containerElement.appendChild(canvas);
 
-        // 4´Ü°è: Chart.js ¼³Á¤ ÁØºñ
+        // 4ë‹¨ê³„: Chart.js ì„¤ì • ìƒì„± (ê¸°ì¡´ íŒ©í† ë¦¬ ì‚¬ìš©)
         const chartConfig = createVisualization(
             dataset,
             vizType,
-            preparedData,
+            chartData, // âœ… ì´ë¯¸ ì²˜ë¦¬ëœ ë°ì´í„° ì§ì ‘ ì‚¬ìš©
             {}, // scalingConfig
             {}, // colorScalingConfig
             {}  // vizOptions
         );
 
-        // °øÅë Chart.js ¿É¼Ç Àû¿ë
+        // ê³µí†µ Chart.js ì˜µì…˜ ì ìš©
         chartConfig.options = {
             ...chartConfig.options,
             responsive: false,
             maintainAspectRatio: false,
             resizeDelay: 0,
             animation: { duration: 300 },
-            ...config.options // »ç¿ëÀÚ ¿É¼Ç º´ÇÕ
+            ...config.options // ì‚¬ìš©ì ì˜µì…˜ ë³‘í•©
         };
 
-        // 5´Ü°è: Chart.js ÀÎ½ºÅÏ½º »ı¼º
+        console.log('[CHART_GENERATOR] Chart.js ì„¤ì • ì¤€ë¹„ ì™„ë£Œ');
+
+        // 5ë‹¨ê³„: Chart.js ì¸ìŠ¤í„´ìŠ¤ ìƒì„±
         const chartInstance = new Chart(canvas, chartConfig);
 
-        // 6´Ü°è: ·¡ÆÛ °´Ã¼ »ı¼º
+        // 6ë‹¨ê³„: ë˜í¼ ê°ì²´ ìƒì„±
         const chartWrapper = new ChartWrapper(chartInstance, containerElement, config);
 
-        console.log('[CHART_GENERATOR] Â÷Æ® »ı¼º ¿Ï·á');
+        console.log('[CHART_GENERATOR] ì°¨íŠ¸ ìƒì„± ì™„ë£Œ');
         return chartWrapper;
 
     } catch (error) {
-        console.error('[CHART_GENERATOR] Â÷Æ® »ı¼º ¿À·ù:', error);
+        console.error('[CHART_GENERATOR] ì°¨íŠ¸ ìƒì„± ì˜¤ë¥˜:', error);
 
-        // ¿¡·¯ Â÷Æ® Ç¥½Ã
+        // ì—ëŸ¬ ì°¨íŠ¸ í‘œì‹œ
         return showError_chart(containerElement, error.message);
     }
 }
