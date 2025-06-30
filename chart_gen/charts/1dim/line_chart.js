@@ -1,6 +1,40 @@
 // visualizations/charts/1d/line-chart.js
 
 /**
+ * 구조화된 툴팁 생성 함수
+ */
+function createStructuredTooltip(ctx) {
+    const original = ctx.raw._fullData;
+    if (!original || typeof original !== 'object') {
+        return '';
+    }
+    
+    // 선택된 축 우선 표시
+    const mainField = ctx.parsed.x;
+    const entries = Object.entries(original);
+    
+    // 사용된 필드 우선, 나머지는 그 다음
+    const usedFields = [];
+    const otherFields = [];
+    
+    entries.forEach(([key, value]) => {
+        if (value === mainField) {
+            usedFields.push(`${key}: ${value} ⭐`);
+        } else {
+            otherFields.push(`${key}: ${value}`);
+        }
+    });
+    
+    const result = [
+        '\n📊 원본 데이터:',
+        ...usedFields,
+        ...(otherFields.length > 0 ? ['--- 기타 필드 ---', ...otherFields] : [])
+    ].join('\n');
+    
+    return result;
+}
+
+/**
  * Creates a 1D line chart visualization
  * @param {Array} data - Prepared data points
  * @param {Object} dataset - Dataset configuration
@@ -18,7 +52,7 @@ export function create1DLineChart(data, dataset) {
         data: data.map((d, i) => ({ 
           x: d[axisName], 
           y: 0,
-          fullData: d._fullData
+          _fullData: d._fullData
         })),
         backgroundColor: 'rgba(54, 162, 235, 0.8)',
         borderColor: 'rgba(54, 162, 235, 1)',
@@ -43,7 +77,7 @@ export function create1DLineChart(data, dataset) {
         tooltip: {
           callbacks: {
             label: (ctx) => `${axisName}: ${ctx.parsed.x}`,
-            afterLabel: (ctx) => '\n' + ctx.raw.fullData
+            afterLabel: createStructuredTooltip
           }
         }
       }
@@ -101,8 +135,14 @@ export function createCategoryChart(data, dataset) {
             afterLabel: (ctx) => {
               const cat = categories[ctx.dataIndex];
               const catData = categoryData[cat];
-              if (catData.length > 0) {
-                return `\n첫 번째 데이터:\n${catData[0]._fullData}`;
+              if (catData.length > 0 && catData[0]._fullData) {
+                const original = catData[0]._fullData;
+                if (typeof original === 'object') {
+                  return '\n📊 첫 번째 데이터 샘플:\n' + 
+                         Object.entries(original)
+                               .map(([key, value]) => `${key}: ${value}`)
+                               .join('\n');
+                }
               }
               return '';
             }

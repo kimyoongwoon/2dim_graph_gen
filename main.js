@@ -1,9 +1,17 @@
 ﻿// ============================================================================
-// main.js - 데이터 생성 페이지 로직 (이벤트 리스너 방식)
+// main.js - 데이터 생성 페이지 로직 (chart_data 모듈 사용)
 // ============================================================================
 
-import { loadBinaryData, displayDataTable } from './chart_gen/data_load.js';
-import { clearAllChartData } from './chart_gen/unified/index.js';
+import { 
+    loadBinaryData, 
+    displayDataTable, 
+    saveToSessionStorage, 
+    clearSessionStorage 
+} from './chart_data/data_load.js';
+
+// 🚨 TODO: shared/error_handler.js로 이동 후 import 경로 수정
+import { clearAllChartData } from './shared/error_handler.js';
+//import { clearAllChartData } from './chart_gen/unified/error_handler.js';
 
 // 전역 변수
 let raw_data = null;
@@ -26,8 +34,10 @@ function updateStepIndicator(activeStep) {
     }
 }
 
-// 🔥 이벤트 리스너 방식으로 변경
+// 🔥 데이터 생성 함수 (chart_data 모듈 사용)
 function generateData() {
+    console.log('[MAIN] 데이터 생성 시작');
+    
     const checkboxes = document.querySelectorAll('.field-selection input[type="checkbox"]:checked');
     const dataCount = parseInt(document.getElementById('dataCount').value);
 
@@ -50,48 +60,38 @@ function generateData() {
         // C++ DataProvider 호출
         dataProvider.generateData(selectedFields, dataCount);
 
-        // 바이너리 데이터 로드
+        // 🔄 chart_data/data_load.js 사용
         loadBinaryData(dataProvider, (data) => {
             raw_data = data;
 
-            // 🔥 sessionStorage에 데이터 저장
+            console.log('[MAIN] 바이너리 데이터 로드 완료:', data.length, '개');
+
+            // 🔄 chart_data/data_load.js의 saveToSessionStorage 사용
             try {
-                const dataString = JSON.stringify(data);
-                const metaInfo = {
-                    fieldNames: Object.keys(data[0] || {}),
-                    recordCount: data.length,
-                    timestamp: Date.now(),
-                    selectedFields: selectedFields
-                };
-
-                sessionStorage.setItem('chartData', dataString);
-                sessionStorage.setItem('chartMeta', JSON.stringify(metaInfo));
-
-                console.log('[MAIN] sessionStorage 저장 완료:', {
-                    dataSize: (dataString.length / 1024).toFixed(2) + 'KB',
-                    recordCount: data.length
+                const metaInfo = saveToSessionStorage(data, {
+                    selectedFields: selectedFields,
+                    generatedAt: new Date().toISOString()
                 });
 
-            } catch (error) {
-                if (error.name === 'QuotaExceededError') {
-                    updateStatus('데이터가 너무 커서 저장할 수 없습니다. 데이터 개수를 줄여주세요.', 'error');
-                    return;
-                } else {
-                    console.error('[MAIN] sessionStorage 저장 오류:', error);
-                    updateStatus('데이터 저장 중 오류가 발생했습니다.', 'error');
-                    return;
-                }
+                console.log('[MAIN] sessionStorage 저장 완료:', {
+                    dataSize: (metaInfo.dataSize / 1024).toFixed(2) + 'KB',
+                    recordCount: metaInfo.recordCount,
+                    fields: metaInfo.fieldNames.join(', ')
+                });
+
+                updateStatus(`✅ ${dataCount}개 데이터 생성 완료 | 필드: ${metaInfo.fieldNames.join(', ')}`, 'success');
+
+                // 🔄 chart_data/data_load.js의 displayDataTable 사용
+                displayDataPreview(data);
+                updateStepIndicator(2);
+
+                // 차트 생성 버튼 활성화
+                document.getElementById('goToChartBtn').disabled = false;
+
+            } catch (storageError) {
+                console.error('[MAIN] sessionStorage 저장 오류:', storageError);
+                updateStatus('데이터 저장 실패: ' + storageError.message, 'error');
             }
-
-            const fieldNames = Object.keys(data[0] || {}).join(', ');
-            updateStatus(`✅ ${dataCount}개 데이터 생성 완료 | 필드: ${fieldNames}`, 'success');
-
-            // 미리보기 표시
-            displayDataPreview(data);
-            updateStepIndicator(2);
-
-            // 차트 생성 버튼 활성화
-            document.getElementById('goToChartBtn').disabled = false;
         });
 
     } catch (error) {
@@ -110,13 +110,15 @@ function goToVisualization() {
     window.location.href = 'graph_complete.html';
 }
 
-// 데이터 미리보기 표시
+// 🔄 chart_data/data_load.js 사용
 function displayDataPreview(data) {
     const section = document.getElementById('dataPreviewSection');
     const table = document.getElementById('dataTable');
 
     displayDataTable(data, table);
     section.style.display = 'block';
+    
+    console.log('[MAIN] 데이터 미리보기 표시 완료');
 }
 
 // QWebChannel 초기화
@@ -125,7 +127,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     updateStepIndicator(1);
 
-    // 🔥 이벤트 리스너 등록
+    // 이벤트 리스너 등록
     const generateBtn = document.getElementById('generateDataBtn');
     const goToChartBtn = document.getElementById('goToChartBtn');
 
@@ -150,9 +152,21 @@ document.addEventListener('DOMContentLoaded', () => {
         console.warn('[MAIN] QWebChannel 사용 불가 - 테스트 모드');
         updateStatus('테스트 모드 - QWebChannel 연결 없음', 'info');
     }
+
+    // 기존 sessionStorage 정리 (새로운 세션 시작)
+    try {
+        clearSessionStorage();
+        console.log('[MAIN] 기존 sessionStorage 정리 완료');
+    } catch (error) {
+        console.warn('[MAIN] sessionStorage 정리 오류:', error);
+    }
 });
 
 // 페이지 언로드시 데이터 정리
 window.addEventListener('beforeunload', () => {
+    console.log('[MAIN] 페이지 언로드 - 데이터 정리');
     clearAllChartData();
+    
+    // 선택적: sessionStorage 정리 (보통은 유지)
+    // clearSessionStorage();
 });

@@ -1,6 +1,36 @@
 import { applyScaling } from '../../scaling/size_scaling.js';
 import { applyColorScaling } from '../../scaling/color_scaling.js';
 
+/**
+ * 구조화된 툴팁 생성 함수 (4차원용)
+ */
+function createStructuredTooltip(ctx, usedAxes = {}) {
+    const original = ctx.raw._fullData;
+    if (!original || typeof original !== 'object') {
+        return '';
+    }
+    
+    const entries = Object.entries(original);
+    const usedFields = [];
+    const otherFields = [];
+    
+    // 사용된 축 우선 표시
+    entries.forEach(([key, value]) => {
+        if (usedAxes[key]) {
+            usedFields.push(`${key}: ${value} ⭐ (${usedAxes[key]})`);
+        } else {
+            otherFields.push(`${key}: ${value}`);
+        }
+    });
+    
+    const result = [
+        '\n📊 원본 데이터:',
+        ...usedFields,
+        ...(otherFields.length > 0 ? ['--- 기타 필드 ---', ...otherFields] : [])
+    ].join('\n');
+    
+    return result;
+}
 
 // 4D 시각화
 export function createScatterSizeColorChart(data, dataset, scalingConfig = { type: 'default', params: {} }, colorScalingConfig = { type: 'default' }) {
@@ -38,7 +68,12 @@ export function createScatterSizeColorChart(data, dataset, scalingConfig = { typ
                 `${sizeAxis}: ${ctx.raw.size}`,
                 `${colorAxis}: ${ctx.raw.color}`
               ],
-              afterLabel: (ctx) => '\n' + ctx.raw.fullData
+              afterLabel: (ctx) => createStructuredTooltip(ctx, { 
+                [xAxis]: 'X축', 
+                [yAxis]: 'Y축', 
+                [sizeAxis]: '크기', 
+                [colorAxis]: '색상' 
+              })
             }
           }
         }
@@ -65,7 +100,7 @@ export function createScatterSizeColorChart(data, dataset, scalingConfig = { typ
           y: d[yAxis],
           size: d[sizeAxis],
           color: d[colorAxis],
-          fullData: d._fullData
+          _fullData: d._fullData
         })),
         backgroundColor: (ctx) => {
           // Safety check for empty data
@@ -106,7 +141,12 @@ export function createScatterSizeColorChart(data, dataset, scalingConfig = { typ
               `${sizeAxis}: ${ctx.raw.size}`,
               `${colorAxis}: ${ctx.raw.color}`
             ],
-            afterLabel: (ctx) => '\n' + ctx.raw.fullData
+            afterLabel: (ctx) => createStructuredTooltip(ctx, { 
+              [xAxis]: 'X축', 
+              [yAxis]: 'Y축', 
+              [sizeAxis]: '크기', 
+              [colorAxis]: '색상' 
+            })
           }
         }
       }

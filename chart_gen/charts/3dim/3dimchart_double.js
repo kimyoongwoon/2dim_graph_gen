@@ -1,6 +1,36 @@
 import { applyScaling } from '../../scaling/size_scaling.js';
 import { applyColorScaling } from '../../scaling/color_scaling.js';
 
+/**
+ * 구조화된 툴팁 생성 함수 (3차원용)
+ */
+function createStructuredTooltip(ctx, usedAxes = {}) {
+    const original = ctx.raw._fullData;
+    if (!original || typeof original !== 'object') {
+        return '';
+    }
+    
+    const entries = Object.entries(original);
+    const usedFields = [];
+    const otherFields = [];
+    
+    // 사용된 축 우선 표시
+    entries.forEach(([key, value]) => {
+        if (usedAxes[key]) {
+            usedFields.push(`${key}: ${value} ⭐ (${usedAxes[key]})`);
+        } else {
+            otherFields.push(`${key}: ${value}`);
+        }
+    });
+    
+    const result = [
+        '\n📊 원본 데이터:',
+        ...usedFields,
+        ...(otherFields.length > 0 ? ['--- 기타 필드 ---', ...otherFields] : [])
+    ].join('\n');
+    
+    return result;
+}
 
 // 3D 시각화
 export function createSizeColorChart(data, dataset, scalingConfig = { type: 'default', params: {} }, colorScalingConfig = { type: 'default' }) {
@@ -35,7 +65,12 @@ export function createSizeColorChart(data, dataset, scalingConfig = { type: 'def
                 `${xAxis}: ${ctx.parsed.x}`,
                 `${sizeAxis}: ${ctx.raw.size}`,
                 `${colorAxis}: ${ctx.raw.color}`
-              ]
+              ],
+              afterLabel: (ctx) => createStructuredTooltip(ctx, { 
+                [xAxis]: 'X축', 
+                [sizeAxis]: '크기', 
+                [colorAxis]: '색상' 
+              })
             }
           }
         }
@@ -61,7 +96,8 @@ export function createSizeColorChart(data, dataset, scalingConfig = { type: 'def
           x: d[xAxis],
           y: 0,
           size: d[sizeAxis],
-          color: d[colorAxis]
+          color: d[colorAxis],
+          _fullData: d._fullData
         })),
         backgroundColor: (ctx) => {
           // Safety check for empty data
@@ -104,7 +140,12 @@ export function createSizeColorChart(data, dataset, scalingConfig = { type: 'def
               `${xAxis}: ${ctx.parsed.x}`,
               `${sizeAxis}: ${ctx.raw.size}`,
               `${colorAxis}: ${ctx.raw.color}`
-            ]
+            ],
+            afterLabel: (ctx) => createStructuredTooltip(ctx, { 
+              [xAxis]: 'X축', 
+              [sizeAxis]: '크기', 
+              [colorAxis]: '색상' 
+            })
           }
         }
       }
@@ -144,7 +185,12 @@ export function createScatterSizeChart(data, dataset, scalingConfig = { type: 'd
                 `${xAxis}: ${ctx.parsed.x}`,
                 `${yAxis}: ${ctx.parsed.y}`,
                 `${sizeAxis}: ${ctx.raw.size}`
-              ]
+              ],
+              afterLabel: (ctx) => createStructuredTooltip(ctx, { 
+                [xAxis]: 'X축', 
+                [yAxis]: 'Y축', 
+                [sizeAxis]: '크기' 
+              })
             }
           }
         }
@@ -165,7 +211,8 @@ export function createScatterSizeChart(data, dataset, scalingConfig = { type: 'd
         data: data.map(d => ({
           x: d[xAxis],
           y: d[yAxis],
-          size: d[sizeAxis]
+          size: d[sizeAxis],
+          _fullData: d._fullData
         })),
         backgroundColor: 'rgba(54, 162, 235, 0.6)',
         borderColor: 'rgba(54, 162, 235, 1)',
@@ -197,7 +244,12 @@ export function createScatterSizeChart(data, dataset, scalingConfig = { type: 'd
               `${xAxis}: ${ctx.parsed.x}`,
               `${yAxis}: ${ctx.parsed.y}`,
               `${sizeAxis}: ${ctx.raw.size}`
-            ]
+            ],
+            afterLabel: (ctx) => createStructuredTooltip(ctx, { 
+              [xAxis]: 'X축', 
+              [yAxis]: 'Y축', 
+              [sizeAxis]: '크기' 
+            })
           }
         }
       }
@@ -237,7 +289,12 @@ export function createScatterColorChart(data, dataset, colorScalingConfig = { ty
                 `${xAxis}: ${ctx.parsed.x}`,
                 `${yAxis}: ${ctx.parsed.y}`,
                 `${colorAxis}: ${ctx.raw.color}`
-              ]
+              ],
+              afterLabel: (ctx) => createStructuredTooltip(ctx, { 
+                [xAxis]: 'X축', 
+                [yAxis]: 'Y축', 
+                [colorAxis]: '색상' 
+              })
             }
           }
         }
@@ -258,7 +315,8 @@ export function createScatterColorChart(data, dataset, colorScalingConfig = { ty
         data: data.map(d => ({
           x: d[xAxis],
           y: d[yAxis],
-          color: d[colorAxis]
+          color: d[colorAxis],
+          _fullData: d._fullData
         })),
         backgroundColor: (ctx) => {
           // Safety check for empty data
@@ -290,7 +348,12 @@ export function createScatterColorChart(data, dataset, colorScalingConfig = { ty
               `${xAxis}: ${ctx.parsed.x}`,
               `${yAxis}: ${ctx.parsed.y}`,
               `${colorAxis}: ${ctx.raw.color}`
-            ]
+            ],
+            afterLabel: (ctx) => createStructuredTooltip(ctx, { 
+              [xAxis]: 'X축', 
+              [yAxis]: 'Y축', 
+              [colorAxis]: '색상' 
+            })
           }
         }
       }

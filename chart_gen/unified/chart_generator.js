@@ -1,11 +1,11 @@
 ﻿// ============================================================================
-// chart_gen/unified/chart_generator.js - 통합 차트 생성 함수 (수정됨)
+// chart_gen/unified/chart_generator.js - 통합 차트 생성 함수 (경로 수정됨)
 // ============================================================================
 
 import { processDataForChart } from './data_processor_unified.js';
 import { ChartWrapper } from './chart_wrapper.js';
 import { createVisualization } from '../chart_factory.js';
-import { showError_chart } from './error_handler.js';
+import { showError_chart } from '../../../shared/error_handler.js';
 
 /**
  * 통합 차트 생성 함수
@@ -33,6 +33,7 @@ export function generateChart(rawData, config, containerElement) {
         }
 
         // 1단계: 데이터 처리 (unified 시스템)
+        console.log('[CHART_GENERATOR] 데이터 처리 시작');
         const processedResult = processDataForChart(rawData, config.dataMapping);
         const { data: chartData, metadata } = processedResult;
 
@@ -69,6 +70,7 @@ export function generateChart(rawData, config, containerElement) {
         containerElement.appendChild(canvas);
 
         // 4단계: Chart.js 설정 생성 (기존 팩토리 사용)
+        console.log('[CHART_GENERATOR] Chart.js 설정 생성');
         const chartConfig = createVisualization(
             dataset,
             vizType,

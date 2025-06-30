@@ -1,3 +1,34 @@
+/**
+ * 구조화된 툴팁 생성 함수 (4차원 문자열용)
+ */
+function createStructuredTooltip(ctx, usedAxes = {}) {
+    const original = ctx.raw._fullData;
+    if (!original || typeof original !== 'object') {
+        return '';
+    }
+    
+    const entries = Object.entries(original);
+    const usedFields = [];
+    const otherFields = [];
+    
+    // 사용된 축 우선 표시
+    entries.forEach(([key, value]) => {
+        if (usedAxes[key]) {
+            usedFields.push(`${key}: ${value} ⭐ (${usedAxes[key]})`);
+        } else {
+            otherFields.push(`${key}: ${value}`);
+        }
+    });
+    
+    const result = [
+        '\n📊 원본 데이터:',
+        ...usedFields,
+        ...(otherFields.length > 0 ? ['--- 기타 필드 ---', ...otherFields] : [])
+    ].join('\n');
+    
+    return result;
+}
+
 // 4D String 시각화
 export function createGroupedScatterSizeColorChart(data, dataset) {
   const stringAxis = dataset.axes[0].name;
@@ -29,7 +60,9 @@ export function createGroupedScatterSizeColorChart(data, dataset) {
             x: d[xAxis],
             y: d[yAxis],
             size: d[sizeAxis],
-            color: d[colorAxis]
+            color: d[colorAxis],
+            _fullData: d._fullData,
+            category: cat
           })),
           backgroundColor: catData.map(d => {
             const value = d[colorAxis];
@@ -60,19 +93,20 @@ export function createGroupedScatterSizeColorChart(data, dataset) {
       plugins: {
         tooltip: {
           callbacks: {
-            label: (ctx) => {
-              const d = data.find(point => 
-                point[xAxis] === ctx.parsed.x && 
-                point[yAxis] === ctx.parsed.y
-              );
-              return [
-                `${stringAxis}: ${d[stringAxis]}`,
-                `${xAxis}: ${ctx.parsed.x}`,
-                `${yAxis}: ${ctx.parsed.y}`,
-                `${sizeAxis}: ${d[sizeAxis]}`,
-                `${colorAxis}: ${d[colorAxis]}`
-              ];
-            }
+            label: (ctx) => [
+              `${stringAxis}: ${ctx.raw.category}`,
+              `${xAxis}: ${ctx.parsed.x}`,
+              `${yAxis}: ${ctx.parsed.y}`,
+              `${sizeAxis}: ${ctx.raw.size}`,
+              `${colorAxis}: ${ctx.raw.color}`
+            ],
+            afterLabel: (ctx) => createStructuredTooltip(ctx, { 
+              [stringAxis]: '그룹', 
+              [xAxis]: 'X축', 
+              [yAxis]: 'Y축', 
+              [sizeAxis]: '크기', 
+              [colorAxis]: '색상' 
+            })
           }
         }
       }

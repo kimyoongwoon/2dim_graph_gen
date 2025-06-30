@@ -1,3 +1,34 @@
+/**
+ * 구조화된 툴팁 생성 함수 (3차원 문자열용)
+ */
+function createStructuredTooltip(ctx, usedAxes = {}) {
+    const original = ctx.raw?._fullData;
+    if (!original || typeof original !== 'object') {
+        return '';
+    }
+    
+    const entries = Object.entries(original);
+    const usedFields = [];
+    const otherFields = [];
+    
+    // 사용된 축 우선 표시
+    entries.forEach(([key, value]) => {
+        if (usedAxes[key]) {
+            usedFields.push(`${key}: ${value} ⭐ (${usedAxes[key]})`);
+        } else {
+            otherFields.push(`${key}: ${value}`);
+        }
+    });
+    
+    const result = [
+        '\n📊 원본 데이터:',
+        ...usedFields,
+        ...(otherFields.length > 0 ? ['--- 기타 필드 ---', ...otherFields] : [])
+    ].join('\n');
+    
+    return result;
+}
+
 // 3D String 시각화
 export function createGroupedBarChart(data, dataset) {
   const stringAxis = dataset.axes[0].name;
@@ -19,7 +50,8 @@ export function createGroupedBarChart(data, dataset) {
       }),
       backgroundColor: `hsla(${hue}, 70%, 50%, 0.8)`,
       borderColor: `hsl(${hue}, 70%, 50%)`,
-      borderWidth: 1
+      borderWidth: 1,
+      _fullData: catData // 카테고리별 전체 데이터 저장
     };
   });
   
@@ -38,6 +70,32 @@ export function createGroupedBarChart(data, dataset) {
         },
         y: {
           title: { display: true, text: yAxis }
+        }
+      },
+      plugins: {
+        tooltip: {
+          callbacks: {
+            label: (ctx) => [
+              `${stringAxis}: ${ctx.dataset.label}`,
+              `${xAxis}: ${ctx.label}`,
+              `${yAxis}: ${ctx.parsed.y}`
+            ],
+            afterLabel: (ctx) => {
+              // 해당 카테고리의 해당 X값에 대한 실제 데이터 포인트 찾기
+              const category = ctx.dataset.label;
+              const xValue = ctx.label;
+              const point = data.find(d => d[stringAxis] === category && d[xAxis] == xValue);
+              
+              if (point && point._fullData) {
+                return createStructuredTooltip({ raw: point }, { 
+                  [stringAxis]: '그룹', 
+                  [xAxis]: 'X축', 
+                  [yAxis]: 'Y축' 
+                });
+              }
+              return '';
+            }
+          }
         }
       }
     }
@@ -63,7 +121,10 @@ export function createGroupedBarSizeChart(data, dataset) {
           data: catData.map(d => ({
             x: d[xAxis],
             y: i,
-            r: Math.sqrt(d[sizeAxis]) * 5
+            r: Math.sqrt(d[sizeAxis]) * 5,
+            _fullData: d._fullData,
+            category: cat,
+            size: d[sizeAxis]
           })),
           backgroundColor: `hsla(${hue}, 70%, 50%, 0.6)`,
           borderColor: `hsl(${hue}, 70%, 50%)`
@@ -81,6 +142,22 @@ export function createGroupedBarSizeChart(data, dataset) {
           type: 'category',
           labels: categories,
           title: { display: true, text: stringAxis }
+        }
+      },
+      plugins: {
+        tooltip: {
+          callbacks: {
+            label: (ctx) => [
+              `${stringAxis}: ${ctx.raw.category}`,
+              `${xAxis}: ${ctx.parsed.x}`,
+              `${sizeAxis}: ${ctx.raw.size}`
+            ],
+            afterLabel: (ctx) => createStructuredTooltip(ctx, { 
+              [stringAxis]: '그룹', 
+              [xAxis]: 'X축', 
+              [sizeAxis]: '크기' 
+            })
+          }
         }
       }
     }
@@ -108,7 +185,9 @@ export function createGroupedBarColorChart(data, dataset) {
           data: catData.map(d => ({
             x: d[xAxis],
             y: i,
-            color: d[colorAxis]
+            color: d[colorAxis],
+            _fullData: d._fullData,
+            category: cat
           })),
           backgroundColor: (ctx) => {
             const value = ctx.raw.color;
@@ -132,6 +211,22 @@ export function createGroupedBarColorChart(data, dataset) {
           type: 'category',
           labels: categories,
           title: { display: true, text: stringAxis }
+        }
+      },
+      plugins: {
+        tooltip: {
+          callbacks: {
+            label: (ctx) => [
+              `${stringAxis}: ${ctx.raw.category}`,
+              `${xAxis}: ${ctx.parsed.x}`,
+              `${colorAxis}: ${ctx.raw.color}`
+            ],
+            afterLabel: (ctx) => createStructuredTooltip(ctx, { 
+              [stringAxis]: '그룹', 
+              [xAxis]: 'X축', 
+              [colorAxis]: '색상' 
+            })
+          }
         }
       }
     }

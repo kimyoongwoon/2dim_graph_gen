@@ -1,6 +1,37 @@
 import { applyScaling } from '../../scaling/size_scaling.js';
 import { applyColorScaling } from '../../scaling/color_scaling.js';
 
+/**
+ * 구조화된 툴팁 생성 함수 (2차원용)
+ */
+function createStructuredTooltip(ctx, usedAxes = {}) {
+    const original = ctx.raw._fullData;
+    if (!original || typeof original !== 'object') {
+        return '';
+    }
+    
+    const entries = Object.entries(original);
+    const usedFields = [];
+    const otherFields = [];
+    
+    // 사용된 축 우선 표시
+    entries.forEach(([key, value]) => {
+        if (usedAxes[key]) {
+            usedFields.push(`${key}: ${value} ⭐ (${usedAxes[key]})`);
+        } else {
+            otherFields.push(`${key}: ${value}`);
+        }
+    });
+    
+    const result = [
+        '\n📊 원본 데이터:',
+        ...usedFields,
+        ...(otherFields.length > 0 ? ['--- 기타 필드 ---', ...otherFields] : [])
+    ].join('\n');
+    
+    return result;
+}
+
 // 2D 시각화
 export function createSizeChart(data, dataset, scalingConfig = { type: 'default', params: {} }) {
   const xAxis = dataset.axes[0].name;
@@ -30,7 +61,7 @@ export function createSizeChart(data, dataset, scalingConfig = { type: 'default'
           tooltip: {
             callbacks: {
               label: (ctx) => [`${xAxis}: ${ctx.parsed.x}`, `${sizeAxis}: ${ctx.raw.size}`],
-              afterLabel: (ctx) => '\n' + ctx.raw.fullData
+              afterLabel: (ctx) => createStructuredTooltip(ctx, { [xAxis]: 'X축', [sizeAxis]: '크기' })
             }
           }
         }
@@ -52,7 +83,7 @@ export function createSizeChart(data, dataset, scalingConfig = { type: 'default'
           x: d[xAxis],
           y: 0,
           size: d[sizeAxis],
-          fullData: d._fullData
+          _fullData: d._fullData
         })),
         backgroundColor: 'rgba(255, 99, 132, 0.6)',
         borderColor: 'rgba(255, 99, 132, 1)',
@@ -86,7 +117,7 @@ export function createSizeChart(data, dataset, scalingConfig = { type: 'default'
               `${xAxis}: ${ctx.parsed.x}`,
               `${sizeAxis}: ${ctx.raw.size}`
             ],
-            afterLabel: (ctx) => '\n' + ctx.raw.fullData
+            afterLabel: (ctx) => createStructuredTooltip(ctx, { [xAxis]: 'X축', [sizeAxis]: '크기' })
           }
         }
       }
@@ -121,7 +152,8 @@ export function createColorChart(data, dataset, colorScalingConfig = { type: 'de
         plugins: {
           tooltip: {
             callbacks: {
-              label: (ctx) => [`${xAxis}: ${ctx.parsed.x}`, `${colorAxis}: ${ctx.raw.color}`]
+              label: (ctx) => [`${xAxis}: ${ctx.parsed.x}`, `${colorAxis}: ${ctx.raw.color}`],
+              afterLabel: (ctx) => createStructuredTooltip(ctx, { [xAxis]: 'X축', [colorAxis]: '색상' })
             }
           }
         }
@@ -142,7 +174,8 @@ export function createColorChart(data, dataset, colorScalingConfig = { type: 'de
         data: data.map(d => ({
           x: d[xAxis],
           y: 0,
-          color: d[colorAxis]
+          color: d[colorAxis],
+          _fullData: d._fullData
         })),
         backgroundColor: (ctx) => {
           const value = ctx.raw.color;
@@ -172,7 +205,8 @@ export function createColorChart(data, dataset, colorScalingConfig = { type: 'de
             label: (ctx) => [
               `${xAxis}: ${ctx.parsed.x}`,
               `${colorAxis}: ${ctx.raw.color}`
-            ]
+            ],
+            afterLabel: (ctx) => createStructuredTooltip(ctx, { [xAxis]: 'X축', [colorAxis]: '색상' })
           }
         }
       }
@@ -192,7 +226,7 @@ export function createScatterChart(data, dataset) {
         data: data.map(d => ({
           x: d[xAxis],
           y: d[yAxis],
-          fullData: d._fullData
+          _fullData: d._fullData
         })),
         backgroundColor: 'rgba(54, 162, 235, 0.6)',
         borderColor: 'rgba(54, 162, 235, 1)',
@@ -217,7 +251,7 @@ export function createScatterChart(data, dataset) {
               `${xAxis}: ${ctx.parsed.x}`,
               `${yAxis}: ${ctx.parsed.y}`
             ],
-            afterLabel: (ctx) => '\n' + ctx.raw.fullData
+            afterLabel: (ctx) => createStructuredTooltip(ctx, { [xAxis]: 'X축', [yAxis]: 'Y축' })
           }
         }
       }

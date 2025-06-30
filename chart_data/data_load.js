@@ -1,5 +1,6 @@
-// chart_gen/data_load.js
-// C++ QWebChannel에서 받은 바이너리 데이터 역직렬화
+// ============================================================================
+// chart_data/data_load.js - 데이터 로드 & sessionStorage 관리
+// ============================================================================
 
 /**
  * C++ QWebChannel에서 받은 바이너리 데이터를 역직렬화
@@ -116,6 +117,110 @@ export function loadBinaryData(dataProvider, callback) {
 }
 
 /**
+ * sessionStorage에 데이터 저장
+ */
+export function saveToSessionStorage(data, additionalMeta = {}) {
+    try {
+        const dataString = JSON.stringify(data);
+        const metaInfo = {
+            fieldNames: Object.keys(data[0] || {}),
+            recordCount: data.length,
+            timestamp: Date.now(),
+            dataSize: dataString.length,
+            ...additionalMeta
+        };
+        
+        sessionStorage.setItem('chartData', dataString);
+        sessionStorage.setItem('chartMeta', JSON.stringify(metaInfo));
+        
+        console.log('[DATA_LOAD] sessionStorage 저장 완료:', {
+            dataSize: (dataString.length / 1024).toFixed(2) + 'KB',
+            recordCount: data.length,
+            fields: metaInfo.fieldNames.join(', ')
+        });
+        
+        return metaInfo;
+        
+    } catch (error) {
+        if (error.name === 'QuotaExceededError') {
+            throw new Error('데이터가 너무 커서 저장할 수 없습니다. 데이터 개수를 줄여주세요.');
+        } else {
+            console.error('[DATA_LOAD] sessionStorage 저장 오류:', error);
+            throw new Error('데이터 저장 중 오류가 발생했습니다.');
+        }
+    }
+}
+
+/**
+ * sessionStorage에서 데이터 로드
+ */
+export function loadFromSessionStorage() {
+    try {
+        const dataString = sessionStorage.getItem('chartData');
+        const metaString = sessionStorage.getItem('chartMeta');
+
+        if (!dataString || !metaString) {
+            throw new Error('저장된 데이터가 없습니다');
+        }
+
+        const data = JSON.parse(dataString);
+        const meta = JSON.parse(metaString);
+
+        // 데이터 유효성 검사
+        if (!Array.isArray(data) || data.length === 0) {
+            throw new Error('유효하지 않은 데이터입니다');
+        }
+
+        console.log('[DATA_LOAD] sessionStorage 로드 완료:', {
+            recordCount: data.length,
+            fields: meta.fieldNames,
+            dataSize: (dataString.length / 1024).toFixed(2) + 'KB',
+            timestamp: new Date(meta.timestamp).toLocaleString()
+        });
+
+        return { data, meta };
+
+    } catch (error) {
+        console.error('[DATA_LOAD] sessionStorage 로드 오류:', error);
+        throw error;
+    }
+}
+
+/**
+ * sessionStorage 데이터 정리
+ */
+export function clearSessionStorage() {
+    sessionStorage.removeItem('chartData');
+    sessionStorage.removeItem('chartMeta');
+    console.log('[DATA_LOAD] sessionStorage 정리 완료');
+}
+
+/**
+ * sessionStorage 정보 조회
+ */
+export function getStorageInfo() {
+    try {
+        const metaString = sessionStorage.getItem('chartMeta');
+        if (!metaString) {
+            return null;
+        }
+        
+        const meta = JSON.parse(metaString);
+        return {
+            exists: true,
+            recordCount: meta.recordCount,
+            fieldNames: meta.fieldNames,
+            dataSize: meta.dataSize,
+            timestamp: meta.timestamp,
+            age: Date.now() - meta.timestamp
+        };
+    } catch (error) {
+        console.error('[DATA_LOAD] Storage 정보 조회 오류:', error);
+        return null;
+    }
+}
+
+/**
  * 데이터 테이블 표시 유틸리티
  */
 export function displayDataTable(data, tableElement) {
@@ -159,13 +264,14 @@ export function displayDataTable(data, tableElement) {
  */
 export function getDataLoaderInfo() {
     return {
-        version: '1.0.0',
-        description: 'C++ QWebChannel 바이너리 데이터 역직렬화 모듈',
+        version: '2.0.0',
+        description: 'C++ QWebChannel 바이너리 데이터 역직렬화 + sessionStorage 관리',
         supportedTypes: ['int', 'double', 'QString'],
         features: [
             'Base64 바이너리 데이터 디코딩',
             'JSON 스키마 파싱',
             'DataView를 이용한 바이너리 역직렬화',
+            'sessionStorage 통합 관리',
             '에러 처리 및 로깅',
             '테이블 표시 유틸리티'
         ]

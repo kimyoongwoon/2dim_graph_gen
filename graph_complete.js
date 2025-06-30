@@ -1,43 +1,50 @@
 // ============================================================================
-// graph_complete.js - 차트 설정 및 시각화 페이지 (sessionStorage 버전)
+// graph_complete.js - 차트 설정 및 시각화 페이지 (chart_data 모듈 사용)
 // ============================================================================
 
-import { generateChart } from './chart_gen/unified/index.js';
-import { clearAllChartData, showError } from './chart_gen/unified/index.js';
-import { analyzeFieldTypes } from './chart_gen/data_processor.js';
-import { getAvailableChartTypes } from './chart_gen/data_processor.js';
+// 🔄 chart_data 모듈들 import
+import { loadFromSessionStorage, getStorageInfo } from './chart_data/data_load.js';
+import { 
+    analyzeFieldTypes, 
+    getAvailableChartTypes,
+    calculateAvailableDimensions,
+    validateFieldConstraints,
+    checkFormCompleteness,
+    getFieldDescription
+} from './chart_data/data_validate.js';
+import { 
+    createDataMapping,
+    createChartConfig,
+    prepareGenerateChartParams,
+    validateCompleteConfiguration
+} from './chart_data/data_processor.js';
+
+// 🚨 TODO: shared/error_handler.js로 이동 후 import 경로 수정
+import { showError, clearAllChartData } from './shared/error_handler.js';
+//import { showError, clearAllChartData } from './chart_gen/unified/error_handler.js';
+
+// 🚨 TODO: chart_gen 정리 후 import 경로 수정
+import { generateChart } from './chart_gen/index.js';
+//import { generateChart } from './chart_gen/unified/index.js';
 
 // 전역 변수들
 let currentChartWrapper = null;
 let raw_data = null;
+let fieldTypes = {};
 
 // ============================================================================
-// 데이터 로드 함수
+// 데이터 로드 함수 (chart_data 모듈 사용)
 // ============================================================================
 
 /**
- * sessionStorage에서 이전에 생성된 데이터를 로드
+ * 🔄 chart_data/data_load.js 사용
  */
 function loadDataFromSessionStorage() {
     updateStatus('저장된 데이터 로드 중...', 'info');
 
     try {
-        // sessionStorage에서 데이터 읽기
-        const dataString = sessionStorage.getItem('chartData');
-        const metaString = sessionStorage.getItem('chartMeta');
-
-        if (!dataString || !metaString) {
-            throw new Error('저장된 데이터가 없습니다');
-        }
-
-        // JSON 파싱
-        const data = JSON.parse(dataString);
-        const meta = JSON.parse(metaString);
-
-        // 데이터 유효성 검사
-        if (!Array.isArray(data) || data.length === 0) {
-            throw new Error('유효하지 않은 데이터입니다');
-        }
+        // 🔄 chart_data/data_load.js의 loadFromSessionStorage 사용
+        const { data, meta } = loadFromSessionStorage();
 
         // 전역 변수에 할당
         raw_data = data;
@@ -45,15 +52,18 @@ function loadDataFromSessionStorage() {
         console.log('[CHART] sessionStorage 데이터 로드 성공:', {
             recordCount: data.length,
             fields: meta.fieldNames,
-            dataSize: (dataString.length / 1024).toFixed(2) + 'KB',
+            dataSize: (meta.dataSize / 1024).toFixed(2) + 'KB',
             timestamp: new Date(meta.timestamp).toLocaleString()
         });
 
         const fieldNames = meta.fieldNames.join(', ');
         updateStatus(`✅ ${data.length}개 데이터 로드 완료 | 필드: ${fieldNames}`, 'success');
 
+        // 🔄 chart_data/data_validate.js 사용
+        fieldTypes = analyzeFieldTypes(data);
+        
         // UI 초기화
-        updateDimensionOptions(data);
+        initializeUI(data);
         updateStepIndicator(2);
 
         // 차트 설정 섹션 표시
@@ -64,6 +74,19 @@ function loadDataFromSessionStorage() {
         updateStatus(`데이터 로드 실패: ${error.message}. 데이터 생성기로 돌아가주세요.`, 'error');
         document.getElementById('chartConfigSection').style.display = 'none';
     }
+}
+
+/**
+ * UI 초기화 (chart_data 모듈 사용)
+ */
+function initializeUI(data) {
+    console.log('[CHART] UI 초기화 시작');
+    
+    // 🔄 chart_data/data_validate.js 사용
+    const maxDimensions = calculateAvailableDimensions(data);
+    updateDimensionOptions(maxDimensions);
+    
+    console.log('[CHART] UI 초기화 완료');
 }
 
 // ============================================================================
@@ -87,16 +110,15 @@ function updateStepIndicator(activeStep) {
 }
 
 // ============================================================================
-// UI 업데이트 함수들
+// UI 업데이트 함수들 (순수 UI 로직만)
 // ============================================================================
 
-function updateDimensionOptions(data) {
+function updateDimensionOptions(maxDimensions) {
     const select = document.getElementById('dimensionSelect');
-    const fieldCount = Object.keys(data[0] || {}).length;
 
     select.innerHTML = '<option value="">차원 선택</option>';
 
-    for (let dim = 1; dim <= Math.min(fieldCount, 4); dim++) {
+    for (let dim = 1; dim <= maxDimensions; dim++) {
         const label = dim === 1 ? '1차원 (선형/카테고리)' :
             dim === 2 ? '2차원 (X-Y 산점도)' :
                 dim === 3 ? '3차원 (X-Y + 크기/색상)' :
@@ -105,6 +127,7 @@ function updateDimensionOptions(data) {
     }
 
     select.onchange = updateFieldSelection;
+    console.log(`[CHART] 차원 옵션 업데이트: 최대 ${maxDimensions}차원`);
 }
 
 function updateFieldSelection() {
@@ -117,10 +140,9 @@ function updateFieldSelection() {
         return;
     }
 
-    const fieldTypes = analyzeFieldTypes(raw_data);
-    container.innerHTML = '';
+    console.log(`[CHART] ${dimension}차원 선택 - 필드 선택 UI 생성`);
 
-    console.log(`[FIELD_SELECTION] ${dimension}차원 선택`);
+    container.innerHTML = '';
 
     // 차원수만큼 필드 선택기 생성
     for (let i = 0; i < dimension; i++) {
@@ -128,6 +150,7 @@ function updateFieldSelection() {
         div.className = 'axis-selector';
 
         const label = document.createElement('label');
+        // 🔄 chart_data/data_validate.js 사용
         label.innerHTML = `필드 ${i + 1}:<br><small>${getFieldDescription(i, dimension)}</small>`;
 
         const select = document.createElement('select');
@@ -142,31 +165,28 @@ function updateFieldSelection() {
     }
 
     updateAllFieldOptions();
-    updateChartTypes(getAvailableChartTypes(dimension));
+    
+    // 🔄 chart_data/data_validate.js 사용
+    const chartTypes = getAvailableChartTypes(dimension);
+    updateChartTypes(chartTypes);
 }
 
-function getFieldDescription(index, dimension) {
-    if (dimension === 1) {
-        return '데이터 값';
-    } else if (dimension === 2) {
-        return index === 0 ? 'X축 (모든 타입)' : 'Y축 (숫자만)';
-    } else if (dimension === 3) {
-        return index === 0 ? 'X축 (모든 타입)' :
-            index === 1 ? 'Y축 (숫자만)' :
-                '크기/색상 (숫자만)';
-    } else { // 4차원
-        return index === 0 ? 'X축 (모든 타입)' :
-            index === 1 ? 'Y축 (숫자만)' :
-                index === 2 ? '크기 (숫자만)' :
-                    '색상 (숫자만)';
-    }
+function updateChartTypes(types) {
+    const select = document.getElementById('chartTypeSelect');
+    select.innerHTML = '<option value="">차트 타입 선택</option>';
+
+    types.forEach(type => {
+        select.innerHTML += `<option value="${type.value}">${type.label}</option>`;
+    });
+
+    select.onchange = checkFormComplete;
+    console.log('[CHART] 차트 타입 옵션 업데이트:', types.length, '개');
 }
 
 function updateAllFieldOptions() {
     const dimension = parseInt(document.getElementById('dimensionSelect').value);
     if (!dimension) return;
 
-    const fieldTypes = analyzeFieldTypes(raw_data);
     const allFields = Object.keys(fieldTypes);
 
     // 현재 선택된 필드들 수집
@@ -190,6 +210,7 @@ function updateAllFieldOptions() {
         // 사용 가능한 필드 필터링
         let availableFields = allFields;
         if (i > 0) {
+            // Y,Z,W축은 숫자만 허용
             availableFields = availableFields.filter(field => fieldTypes[field] === 'double');
         }
         availableFields = availableFields.filter(field =>
@@ -220,139 +241,28 @@ function updateAllFieldOptions() {
     checkFormComplete();
 }
 
-function updateChartTypes(types) {
-    const select = document.getElementById('chartTypeSelect');
-    select.innerHTML = '<option value="">차트 타입 선택</option>';
-
-    types.forEach(type => {
-        select.innerHTML += `<option value="${type.value}">${type.label}</option>`;
-    });
-
-    select.onchange = checkFormComplete;
-}
-
 function checkFormComplete() {
-    const dimension = document.getElementById('dimensionSelect').value;
+    const dimension = parseInt(document.getElementById('dimensionSelect').value);
     const chartType = document.getElementById('chartTypeSelect').value;
 
-    let allFieldsSelected = true;
+    // 선택된 필드들 수집
+    const selectedFields = [];
     if (dimension) {
-        for (let i = 0; i < parseInt(dimension); i++) {
+        for (let i = 0; i < dimension; i++) {
             const fieldElement = document.getElementById(`field${i}`);
-            if (!fieldElement || !fieldElement.value) {
-                allFieldsSelected = false;
-                break;
+            if (fieldElement && fieldElement.value) {
+                selectedFields.push(fieldElement.value);
             }
         }
     }
 
-    const isComplete = dimension && chartType && allFieldsSelected;
+    // 🔄 chart_data/data_validate.js 사용
+    const isComplete = checkFormCompleteness(dimension, chartType, selectedFields);
     document.getElementById('createChartBtn').disabled = !isComplete;
+    
+    console.log('[CHART] 폼 완성도 검사:', { dimension, chartType, selectedFields, isComplete });
 }
 
-// ============================================================================
-// 차트 생성 함수 (새로운 통합 시스템 사용)
-// ============================================================================
-
-
-
-// 데이터 매핑 생성 함수 (디버깅 강화)
-function createDataMapping(selectedFields, dimension) {
-    console.log('[CREATE_MAPPING] === 디버깅 시작 ===');
-    console.log('[CREATE_MAPPING] 입력 selectedFields:', selectedFields);
-    console.log('[CREATE_MAPPING] selectedFields 타입:', typeof selectedFields);
-    console.log('[CREATE_MAPPING] selectedFields.length:', selectedFields?.length);
-    console.log('[CREATE_MAPPING] 입력 dimension:', dimension);
-
-    // 각 필드 개별 검사
-    selectedFields.forEach((field, index) => {
-        console.log(`[CREATE_MAPPING] 필드 ${index}:`, {
-            value: field,
-            type: typeof field,
-            length: field?.length,
-            trimmed: field?.trim(),
-            isEmpty: !field || field.trim() === ''
-        });
-    });
-
-    const mapping = {};
-
-    // 1차원: x만
-    if (dimension >= 1 && selectedFields[0]) {
-        const field = selectedFields[0].trim();
-        if (field) {
-            mapping.x = field;
-            console.log('[CREATE_MAPPING] X축 설정:', field);
-        } else {
-            console.error('[CREATE_MAPPING] X축 필드가 빈 값입니다!');
-        }
-    }
-
-    // 2차원: x, y
-    if (dimension >= 2 && selectedFields[1]) {
-        const field = selectedFields[1].trim();
-        if (field) {
-            mapping.y = field;
-            console.log('[CREATE_MAPPING] Y축 설정:', field);
-        } else {
-            console.error('[CREATE_MAPPING] Y축 필드가 빈 값입니다!');
-        }
-    }
-
-    // 3차원: x, y, size
-    if (dimension >= 3 && selectedFields[2]) {
-        const field = selectedFields[2].trim();
-        if (field) {
-            mapping.size = field;
-            console.log('[CREATE_MAPPING] Size축 설정:', field);
-        } else {
-            console.error('[CREATE_MAPPING] Size축 필드가 빈 값입니다!');
-        }
-    }
-
-    // 4차원: x, y, size, color
-    if (dimension >= 4 && selectedFields[3]) {
-        const field = selectedFields[3].trim();
-        if (field) {
-            mapping.color = field;
-            console.log('[CREATE_MAPPING] Color축 설정:', field);
-        } else {
-            console.error('[CREATE_MAPPING] Color축 필드가 빈 값입니다!');
-        }
-    }
-
-    console.log('[CREATE_MAPPING] 생성된 매핑:', mapping);
-
-    // Object.values 검사
-    const mappingValues = Object.values(mapping);
-    console.log('[CREATE_MAPPING] Object.values(mapping):', mappingValues);
-
-    mappingValues.forEach((value, index) => {
-        console.log(`[CREATE_MAPPING] 매핑값 ${index}:`, {
-            value: value,
-            type: typeof value,
-            length: value?.length,
-            isEmpty: !value || value.trim() === ''
-        });
-    });
-
-    // 빈 값 제거
-    const cleanMapping = {};
-    Object.entries(mapping).forEach(([key, value]) => {
-        if (value && value.trim && value.trim() !== '') {
-            cleanMapping[key] = value.trim();
-        } else {
-            console.warn(`[CREATE_MAPPING] 빈 값 제거: ${key} = "${value}"`);
-        }
-    });
-
-    console.log('[CREATE_MAPPING] 정리된 매핑:', cleanMapping);
-    console.log('[CREATE_MAPPING] === 디버깅 완료 ===');
-
-    return cleanMapping;
-}
-
-// 차트 정보 표시
 function displayChartInfo(chartType, selectedFields, dataCount) {
     const info = document.getElementById('chartInfo');
     const fieldsInfo = selectedFields.join(' → ');
@@ -365,11 +275,13 @@ function displayChartInfo(chartType, selectedFields, dataCount) {
     `;
 }
 
-
-
-
+// ============================================================================
+// 차트 생성 함수 (chart_data 모듈 사용)
+// ============================================================================
 
 window.createVisualization = function () {
+    console.log('[CHART] 차트 생성 시작');
+    
     if (!raw_data || raw_data.length === 0) {
         showError('데이터를 먼저 생성해주세요');
         return;
@@ -378,19 +290,13 @@ window.createVisualization = function () {
     const dimension = parseInt(document.getElementById('dimensionSelect').value);
     const chartType = document.getElementById('chartTypeSelect').value;
 
-    console.log('[CREATE_VIZ] 시작:', { dimension, chartType });
+    console.log('[CHART] 사용자 선택:', { dimension, chartType });
 
-    // 선택된 필드들 수집 (디버깅 강화)
+    // 선택된 필드들 수집
     const selectedFields = [];
     for (let i = 0; i < dimension; i++) {
         const fieldElement = document.getElementById(`field${i}`);
         const fieldValue = fieldElement?.value;
-
-        console.log(`[CREATE_VIZ] 필드 ${i}:`, {
-            element: fieldElement ? 'exists' : 'null',
-            value: fieldValue,
-            trimmed: fieldValue?.trim()
-        });
 
         if (fieldValue && fieldValue.trim() !== '') {
             selectedFields.push(fieldValue.trim());
@@ -400,16 +306,11 @@ window.createVisualization = function () {
         }
     }
 
-    console.log('[CREATE_VIZ] 수집된 필드들:', selectedFields);
-
-    if (selectedFields.length !== dimension) {
-        showError(`선택된 필드 수(${selectedFields.length})가 차원수(${dimension})와 일치하지 않습니다`);
-        return;
-    }
+    console.log('[CHART] 수집된 필드들:', selectedFields);
 
     // 실제 데이터 필드명 확인
     const availableFields = Object.keys(raw_data[0] || {});
-    console.log('[CREATE_VIZ] 사용 가능한 필드들:', availableFields);
+    console.log('[CHART] 사용 가능한 필드들:', availableFields);
 
     // 선택된 필드가 실제 데이터에 있는지 확인
     const missingFields = selectedFields.filter(field => !availableFields.includes(field));
@@ -421,29 +322,26 @@ window.createVisualization = function () {
     try {
         updateStatus('시각화 생성 중...', 'info');
 
-        // 데이터 매핑 생성
-        const dataMapping = createDataMapping(selectedFields, dimension);
-        console.log('[CREATE_VIZ] 데이터 매핑:', dataMapping);
-
-        // 매핑 검증
-        const mappingValues = Object.values(dataMapping);
-        if (mappingValues.length === 0) {
-            throw new Error('데이터 매핑이 비어있습니다');
+        // 🔄 chart_data/data_validate.js 사용
+        const fieldValidation = validateFieldConstraints(selectedFields, fieldTypes, dimension);
+        if (!fieldValidation.isValid) {
+            showError(`필드 제약 오류: ${fieldValidation.errors.join(', ')}`);
+            return;
         }
 
-        // 차트 설정 생성
-        const chartConfig = {
-            type: chartType,
-            dataMapping: dataMapping,
-            options: {
-                plugins: {
-                    title: {
-                        display: true,
-                        text: `${chartType} Chart (${dimension}D)`
-                    }
-                }
-            }
-        };
+        // 🔄 chart_data/data_processor.js 사용
+        const userSelections = { dimension, chartType, selectedFields };
+        const configValidation = validateCompleteConfiguration(raw_data, userSelections, fieldTypes);
+        
+        if (!configValidation.isValid) {
+            showError(`설정 검증 오류: ${configValidation.errors.join(', ')}`);
+            return;
+        }
+
+        // 🔄 chart_data/data_processor.js 사용  
+        const { chartConfig } = prepareGenerateChartParams(raw_data, userSelections);
+
+        console.log('[CHART] 생성된 차트 설정:', chartConfig);
 
         // 기존 차트 정리
         if (currentChartWrapper) {
@@ -463,7 +361,13 @@ window.createVisualization = function () {
 
         const canvasWrapper = chartContainer.querySelector('.chart-canvas-wrapper');
 
-        // 🆕 새로운 통합 시스템으로 차트 생성
+        // 🔄 차트 엔진 호출 (generateChart)
+        console.log('[CHART] generateChart 호출:', {
+            dataCount: raw_data.length,
+            configType: chartConfig.type,
+            mappingKeys: Object.keys(chartConfig.dataMapping)
+        });
+
         currentChartWrapper = generateChart(raw_data, chartConfig, canvasWrapper);
 
         // 이벤트 리스너 등록
@@ -489,6 +393,8 @@ window.createVisualization = function () {
         updateStatus('시각화 생성 완료!', 'success');
         updateStepIndicator(3);
 
+        console.log('[CHART] 차트 생성 완료');
+
     } catch (error) {
         console.error('[CHART] 생성 오류:', error);
         showError('차트 생성 실패: ' + error.message);
@@ -496,10 +402,10 @@ window.createVisualization = function () {
     }
 };
 
-
-
-// 데이터 생성기로 돌아가기 (데이터 정리)
+// 데이터 생성기로 돌아가기
 window.goBackToGenerator = function () {
+    console.log('[CHART] 데이터 생성기로 돌아가기');
+    
     // 현재 차트 정리
     if (currentChartWrapper) {
         currentChartWrapper.destroy();
@@ -509,11 +415,10 @@ window.goBackToGenerator = function () {
     // 전역 데이터 정리
     clearAllChartData();
     raw_data = null;
+    fieldTypes = {};
 
-    // 🔥 sessionStorage 정리 (선택사항)
-    // sessionStorage.removeItem('chartData');
-    // sessionStorage.removeItem('chartMeta');
-
+    // sessionStorage는 유지 (사용자가 다시 돌아올 수 있음)
+    
     window.location.href = 'index.html';
 };
 
@@ -525,23 +430,28 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('=== 차트 페이지 초기화 ===');
 
     // 크기 스케일링 변경 핸들러
-    document.getElementById('sizeScaling').addEventListener('change', function () {
-        const sigmoidContainer = document.getElementById('sigmoidKContainer');
-        sigmoidContainer.style.display = this.value === 'sigmoid' ? 'flex' : 'none';
-    });
+    const sizeScalingSelect = document.getElementById('sizeScaling');
+    if (sizeScalingSelect) {
+        sizeScalingSelect.addEventListener('change', function () {
+            const sigmoidContainer = document.getElementById('sigmoidKContainer');
+            if (sigmoidContainer) {
+                sigmoidContainer.style.display = this.value === 'sigmoid' ? 'flex' : 'none';
+            }
+        });
+    }
 
-    // 🔥 sessionStorage에서 데이터 로드
+    // 🔄 chart_data/data_load.js 사용
     loadDataFromSessionStorage();
 });
 
 // 페이지 언로드시 정리
 window.addEventListener('beforeunload', () => {
+    console.log('[CHART] 페이지 언로드 - 차트 정리');
+    
     if (currentChartWrapper) {
         currentChartWrapper.destroy();
     }
     clearAllChartData();
 
-    // 🔥 선택사항: sessionStorage 정리 (보통은 브라우저 세션 종료시까지 유지)
-    // sessionStorage.removeItem('chartData');
-    // sessionStorage.removeItem('chartMeta');
+    // sessionStorage는 유지 (브라우저 세션 종료시까지)
 });

@@ -1,37 +1,37 @@
 // ============================================================================
-// chart_gen/unified/data_processor_unified.js - µ¶¸³Àû µ¥ÀÌÅÍ º¯È¯ ÇÔ¼ö
+// chart_gen/unified/data_processor_unified.js - ë…ë¦½ì  ë°ì´í„° ë³€í™˜ (ìµœì í™”ë¨)
 // ============================================================================
 
-import { analyzeFieldTypes } from '../data_processor.js';
+import { analyzeFieldTypes } from '../../../chart_data/data_validate.js';
 
 /**
- * ¿ø½Ã µ¥ÀÌÅÍ¸¦ Â÷Æ®¿ëÀ¸·Î º¯È¯ÇÏ´Â µ¶¸³Àû ÇÔ¼ö
- * @param {Array} rawData - ¿ø½Ã µ¥ÀÌÅÍ ¹è¿­ [{field1: val1, field2: val2}, ...]
- * @param {Object} dataMapping - µ¥ÀÌÅÍ ¸ÅÇÎ {x: 'field1', y: 'field2', size: 'field3', color: 'field4'}
- * @returns {Object} º¯È¯µÈ µ¥ÀÌÅÍ¿Í ¸ŞÅ¸Á¤º¸
+ * ì›ì‹œ ë°ì´í„°ë¥¼ ì°¨íŠ¸ìš©ìœ¼ë¡œ ë³€í™˜í•˜ëŠ” ë…ë¦½ì  í•¨ìˆ˜ (ì„±ëŠ¥ ìµœì í™”)
+ * @param {Array} rawData - ì›ì‹œ ë°ì´í„° ë°°ì—´ [{field1: val1, field2: val2}, ...]
+ * @param {Object} dataMapping - ë°ì´í„° ë§¤í•‘ {x: 'field1', y: 'field2', size: 'field3', color: 'field4'}
+ * @returns {Object} ë³€í™˜ëœ ë°ì´í„°ì™€ ë©”íƒ€ì •ë³´
  */
 export function processDataForChart(rawData, dataMapping) {
-    console.log('[DATA_PROCESSOR_UNIFIED] µ¥ÀÌÅÍ º¯È¯ ½ÃÀÛ');
-    console.log('[DATA_PROCESSOR_UNIFIED] ¿ø½Ã µ¥ÀÌÅÍ:', rawData?.length, '°³');
-    console.log('[DATA_PROCESSOR_UNIFIED] ¸ÅÇÎ:', dataMapping);
+    console.log('[DATA_PROCESSOR_UNIFIED] ë°ì´í„° ë³€í™˜ ì‹œì‘');
+    console.log('[DATA_PROCESSOR_UNIFIED] ì›ì‹œ ë°ì´í„°:', rawData?.length, 'ê°œ');
+    console.log('[DATA_PROCESSOR_UNIFIED] ë§¤í•‘:', dataMapping);
 
-    // ÀÔ·Â °ËÁõ
+    // ì…ë ¥ ê²€ì¦
     if (!rawData || !Array.isArray(rawData) || rawData.length === 0) {
-        throw new Error('À¯È¿ÇÑ µ¥ÀÌÅÍ°¡ ¾ø½À´Ï´Ù');
+        throw new Error('ìœ íš¨í•œ ë°ì´í„°ê°€ ì—†ìŠµë‹ˆë‹¤');
     }
 
     if (!dataMapping || typeof dataMapping !== 'object') {
-        throw new Error('µ¥ÀÌÅÍ ¸ÅÇÎÀÌ ÇÊ¿äÇÕ´Ï´Ù');
+        throw new Error('ë°ì´í„° ë§¤í•‘ì´ í•„ìš”í•©ë‹ˆë‹¤');
     }
 
-    // ÇÊµå Å¸ÀÔ ºĞ¼®
+    // í•„ë“œ íƒ€ì… ë¶„ì„
     const fieldTypes = analyzeFieldTypes(rawData);
-    console.log('[DATA_PROCESSOR_UNIFIED] ÇÊµå Å¸ÀÔ:', fieldTypes);
+    console.log('[DATA_PROCESSOR_UNIFIED] í•„ë“œ íƒ€ì…:', fieldTypes);
 
-    // ¸ÅÇÎ ÇÊµå Á¸Àç ¿©ºÎ È®ÀÎ (°­È­µÈ µğ¹ö±ë)
+    // ë§¤í•‘ í•„ë“œëª… ì¡´ì¬ ì—¬ë¶€ í™•ì¸ (ê°•í™”ëœ ë””ë²„ê¹…)
     const availableFields = Object.keys(fieldTypes);
-    console.log('[DATA_PROCESSOR_UNIFIED] === ¸ÅÇÎ °ËÁõ ½ÃÀÛ ===');
-    console.log('[DATA_PROCESSOR_UNIFIED] dataMapping °´Ã¼:', dataMapping);
+    console.log('[DATA_PROCESSOR_UNIFIED] === ë§¤í•‘ ê²€ì¦ ì‹œì‘ ===');
+    console.log('[DATA_PROCESSOR_UNIFIED] dataMapping ê°ì²´:', dataMapping);
     console.log('[DATA_PROCESSOR_UNIFIED] Object.keys(dataMapping):', Object.keys(dataMapping));
     console.log('[DATA_PROCESSOR_UNIFIED] Object.values(dataMapping):', Object.values(dataMapping));
 
@@ -39,7 +39,7 @@ export function processDataForChart(rawData, dataMapping) {
     console.log('[DATA_PROCESSOR_UNIFIED] rawMappedFields:', rawMappedFields);
 
     rawMappedFields.forEach((field, index) => {
-        console.log(`[DATA_PROCESSOR_UNIFIED] ¿ø½Ã ¸ÅÇÎ°ª ${index}:`, {
+        console.log(`[DATA_PROCESSOR_UNIFIED] ì›ì‹œ ë§¤í•‘ê°’ ${index}:`, {
             value: field,
             type: typeof field,
             length: field?.length,
@@ -49,39 +49,38 @@ export function processDataForChart(rawData, dataMapping) {
 
     const mappedFields = Object.values(dataMapping).filter(field => {
         const isValid = field && typeof field === 'string' && field.trim() !== '';
-        console.log(`[DATA_PROCESSOR_UNIFIED] ÇÊµå °ËÁõ:`, {
+        console.log(`[DATA_PROCESSOR_UNIFIED] í•„ë“œ ê²€ì¦:`, {
             field: field,
             isValid: isValid
         });
         return isValid;
     });
 
-    console.log('[DATA_PROCESSOR_UNIFIED] ÇÊÅÍ¸µµÈ mappedFields:', mappedFields);
-    console.log('[DATA_PROCESSOR_UNIFIED] »ç¿ë °¡´ÉÇÑ ÇÊµåµé:', availableFields);
+    console.log('[DATA_PROCESSOR_UNIFIED] í•„í„°ë§ëœ mappedFields:', mappedFields);
+    console.log('[DATA_PROCESSOR_UNIFIED] ì‚¬ìš© ê°€ëŠ¥í•œ í•„ë“œë“¤:', availableFields);
 
     const missingFields = mappedFields.filter(field => {
         const exists = availableFields.includes(field);
-        console.log(`[DATA_PROCESSOR_UNIFIED] ÇÊµå Á¸Àç È®ÀÎ: "${field}" ¡æ ${exists}`);
+        console.log(`[DATA_PROCESSOR_UNIFIED] í•„ë“œ ì¡´ì¬ í™•ì¸: "${field}" â†’ ${exists}`);
         return !exists;
     });
 
     console.log('[DATA_PROCESSOR_UNIFIED] missingFields:', missingFields);
-    console.log('[DATA_PROCESSOR_UNIFIED] missingFields.join(", "):', missingFields.join(', '));
 
     if (missingFields.length > 0) {
-        throw new Error(`¸ÅÇÎµÈ ÇÊµå°¡ µ¥ÀÌÅÍ¿¡ ¾ø½À´Ï´Ù: ${missingFields.join(', ')}`);
+        throw new Error(`ë§¤í•‘ëœ í•„ë“œê°€ ë°ì´í„°ì— ì—†ìŠµë‹ˆë‹¤: ${missingFields.join(', ')}`);
     }
 
     if (mappedFields.length === 0) {
-        throw new Error('À¯È¿ÇÑ ¸ÅÇÎ ÇÊµå°¡ ¾ø½À´Ï´Ù');
+        throw new Error('ìœ íš¨í•œ ë§¤í•‘ í•„ë“œê°€ ì—†ìŠµë‹ˆë‹¤');
     }
 
-    console.log('[DATA_PROCESSOR_UNIFIED] === ¸ÅÇÎ °ËÁõ ¿Ï·á ===');
+    console.log('[DATA_PROCESSOR_UNIFIED] === ë§¤í•‘ ê²€ì¦ ì™„ë£Œ ===');
 
-    // °£´ÜÇÑ °ËÁõ¸¸ ¼öÇà (º¹ÀâÇÑ Ãà °ËÁõÀº ½ºÅµ)
-    console.log('[DATA_PROCESSOR_UNIFIED] ±âº» °ËÁõ ¿Ï·á');
+    // ê°„ë‹¨í•œ ê²€ì¦ë§Œ ìˆ˜í–‰ (ë³µì¡í•œ ê²€ì¦ì€ ìƒëµ)
+    console.log('[DATA_PROCESSOR_UNIFIED] ê¸°ë³¸ ê²€ì¦ ì™„ë£Œ');
 
-    // Ãà Á¤º¸ »ı¼º
+    // ì¶• ì •ë³´ ìƒì„±
     const axes = [];
     const axisOrder = ['x', 'y', 'size', 'color'];
 
@@ -96,7 +95,7 @@ export function processDataForChart(rawData, dataMapping) {
         }
     });
 
-    // ¸ŞÅ¸µ¥ÀÌÅÍ »ı¼º
+    // ë©”íƒ€ë°ì´í„° ìƒì„±
     const metadata = {
         dim: axes.length,
         axes: axes,
@@ -105,14 +104,16 @@ export function processDataForChart(rawData, dataMapping) {
         recordCount: rawData.length
     };
 
-    // Â÷Æ®¿ë µ¥ÀÌÅÍ º¯È¯
+    // âœ… ì„±ëŠ¥ ìµœì í™”: ì°¨íŠ¸ìš© ë°ì´í„° ë³€í™˜ (ì›ë³¸ ê°ì²´ ì§ì ‘ ì°¸ì¡°)
+    console.log('[DATA_PROCESSOR_UNIFIED] === ì„±ëŠ¥ ìµœì í™”ëœ ë°ì´í„° ë³€í™˜ ì‹œì‘ ===');
+    
     const chartData = rawData.map((row, index) => {
         const dataPoint = {
             _originalIndex: index,
-            _fullData: `Point ${index}: ${JSON.stringify(row)}`
+            _fullData: row  // ğŸ”¥ ì„±ëŠ¥ ìµœì í™”: ì›ë³¸ ê°ì²´ ì§ì ‘ ì°¸ì¡° (JSON.stringify ì œê±°!)
         };
 
-        // ¸ÅÇÎµÈ ÇÊµåµéÀ» Ãà ÀÌ¸§À¸·Î º¹»ç
+        // ë§¤í•‘ëœ í•„ë“œë“¤ì„ ì¶• ì´ë¦„ìœ¼ë¡œ ë³µì‚¬
         Object.entries(dataMapping).forEach(([axisType, fieldName]) => {
             if (fieldName && row[fieldName] !== undefined) {
                 dataPoint[fieldName] = row[fieldName];
@@ -122,18 +123,23 @@ export function processDataForChart(rawData, dataMapping) {
         return dataPoint;
     });
 
+    console.log('[DATA_PROCESSOR_UNIFIED] === ì„±ëŠ¥ ìµœì í™” ì™„ë£Œ ===');
+    console.log('[DATA_PROCESSOR_UNIFIED] ì›ë³¸ ê°ì²´ ì§ì ‘ ì°¸ì¡°ë¡œ ë©”ëª¨ë¦¬ íš¨ìœ¨ì„± ê·¹ëŒ€í™”');
+
     const result = {
         data: chartData,
         metadata: metadata,
         originalData: rawData
     };
 
-    console.log('[DATA_PROCESSOR_UNIFIED] º¯È¯ ¿Ï·á:', chartData.length, '°³ Æ÷ÀÎÆ®');
+    console.log('[DATA_PROCESSOR_UNIFIED] ë³€í™˜ ì™„ë£Œ:', chartData.length, 'ê°œ í¬ì¸íŠ¸');
+    console.log('[DATA_PROCESSOR_UNIFIED] ì²« ë²ˆì§¸ ë³€í™˜ëœ í¬ì¸íŠ¸ ìƒ˜í”Œ:', chartData[0]);
+    
     return result;
 }
 
 /**
- * Áßº¹°ª Á¸Àç ¿©ºÎ °è»ê (±âÁ¸ ÇÔ¼ö¿¡¼­ º¹»ç)
+ * ì¤‘ë³µê°’ ì¡´ì¬ ì—¬ë¶€ ê³„ì‚° (ê¸°ì¡´ í•¨ìˆ˜ì—ì„œ ë³µì‚¬)
  */
 function calculateAllowDuplicates(data, fieldName) {
     if (!data || data.length === 0) return false;
