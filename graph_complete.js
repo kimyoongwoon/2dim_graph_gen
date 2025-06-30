@@ -1,22 +1,15 @@
-// graph_complete.js
-// 차트 설정 및 시각화 페이지 실행 로직
+// ============================================================================
+// graph_complete.js - 차트 설정 및 시각화 페이지 (완전히 새로 작성)
+// ============================================================================
 
-// 모듈 imports
-import {
-    convertToAxisFormat,
-    getAvailableChartTypes,
-    validateAxisAssignment,
-    validateDataIntegrity
-} from './chart_gen/data_processor.js';
-
-import { createVisualization } from './chart_gen/chart_factory.js';
-import { prepareDataForChart } from './chart_gen/data_processor.js';
+import { generateChart } from './chart_gen/unified/index.js';
+import { getRawData, clearAllChartData, showError } from './chart_gen/unified/index.js';
+import { analyzeFieldTypes } from './chart_gen/data_processor.js';
+import { getAvailableChartTypes } from './chart_gen/data_processor.js';
 
 // 전역 변수들
-let globalData = [];
-let convertedData = null;
-let metadata = null;
-let currentChart = null;
+let currentChartWrapper = null;
+let raw_data = null;
 
 // ============================================================================
 // 유틸리티 함수들
@@ -29,16 +22,6 @@ function updateStatus(message, type = 'info') {
     dataInfo.className = `data-info ${type}`;
 }
 
-function showError(message) {
-    const errorDiv = document.getElementById('errorDisplay');
-    errorDiv.textContent = `오류: ${message}`;
-    errorDiv.style.display = 'block';
-
-    setTimeout(() => {
-        errorDiv.style.display = 'none';
-    }, 5000);
-}
-
 function updateStepIndicator(activeStep) {
     for (let i = 1; i <= 3; i++) {
         const step = document.getElementById(`step${i}`);
@@ -46,25 +29,6 @@ function updateStepIndicator(activeStep) {
         if (i < activeStep) step.className += ' completed';
         else if (i === activeStep) step.className += ' active';
     }
-}
-
-function analyzeFieldTypes(data) {
-    if (!data || data.length === 0) return {};
-
-    const sample = data[0];
-    const fieldTypes = {};
-
-    for (const [field, value] of Object.entries(sample)) {
-        if (typeof value === 'number') {
-            fieldTypes[field] = 'double';
-        } else if (typeof value === 'string') {
-            fieldTypes[field] = 'string';
-        } else {
-            fieldTypes[field] = 'double';
-        }
-    }
-
-    return fieldTypes;
 }
 
 // ============================================================================
@@ -77,7 +41,6 @@ function updateDimensionOptions(data) {
 
     select.innerHTML = '<option value="">차원 선택</option>';
 
-    // 수정: 최대 차원수는 전체 필드 개수 (value 필드 분리 없음)
     for (let dim = 1; dim <= Math.min(fieldCount, 4); dim++) {
         const label = dim === 1 ? '1차원 (선형/카테고리)' :
             dim === 2 ? '2차원 (X-Y 산점도)' :
@@ -86,11 +49,9 @@ function updateDimensionOptions(data) {
         select.innerHTML += `<option value="${dim}">${label}</option>`;
     }
 
-    // 이벤트 리스너 추가
     select.onchange = updateFieldSelection;
 }
 
-// 새로운 함수: 필드 선택 UI 생성
 function updateFieldSelection() {
     const dimension = parseInt(document.getElementById('dimensionSelect').value);
     const container = document.getElementById('axisMapping');
@@ -101,12 +62,10 @@ function updateFieldSelection() {
         return;
     }
 
-    const fieldTypes = analyzeFieldTypes(globalData);
-    const allFields = Object.keys(fieldTypes);
-
+    const fieldTypes = analyzeFieldTypes(raw_data);
     container.innerHTML = '';
 
-    console.log(`[FIELD_SELECTION] ${dimension}차원 선택 → ${dimension}개 필드 선택`);
+    console.log(`[FIELD_SELECTION] ${dimension}차원 선택`);
 
     // 차원수만큼 필드 선택기 생성
     for (let i = 0; i < dimension; i++) {
@@ -120,7 +79,6 @@ function updateFieldSelection() {
         select.id = `field${i}`;
         select.className = 'field-selector';
         select.onchange = updateAllFieldOptions;
-
         select.innerHTML = '<option value="">필드 선택</option>';
 
         div.appendChild(label);
@@ -128,12 +86,10 @@ function updateFieldSelection() {
         container.appendChild(div);
     }
 
-    // 초기 필드 옵션 업데이트
     updateAllFieldOptions();
     updateChartTypes(getAvailableChartTypes(dimension));
 }
 
-// 필드별 설명 생성
 function getFieldDescription(index, dimension) {
     if (dimension === 1) {
         return '데이터 값';
@@ -151,12 +107,11 @@ function getFieldDescription(index, dimension) {
     }
 }
 
-// 모든 필드 선택기의 옵션 업데이트 (중복 방지)
 function updateAllFieldOptions() {
     const dimension = parseInt(document.getElementById('dimensionSelect').value);
     if (!dimension) return;
 
-    const fieldTypes = analyzeFieldTypes(globalData);
+    const fieldTypes = analyzeFieldTypes(raw_data);
     const allFields = Object.keys(fieldTypes);
 
     // 현재 선택된 필드들 수집
@@ -168,214 +123,44 @@ function updateAllFieldOptions() {
         }
     }
 
-    console.log('[FIELD_OPTIONS] 선택된 필드들:', selectedFields);
+    // 배치 업데이트로 리플로우 최소화
+    const updates = [];
 
-    // 각 필드 선택기의 옵션 업데이트
     for (let i = 0; i < dimension; i++) {
         const fieldSelect = document.getElementById(`field${i}`);
         if (!fieldSelect) continue;
 
-        const currentValue = fieldSelect.value; // 현재 선택값 보존
+        const currentValue = fieldSelect.value;
 
         // 사용 가능한 필드 필터링
         let availableFields = allFields;
-
-        // 1. 타입 제한 (첫 번째 필드는 모든 타입, 나머지는 숫자만)
         if (i > 0) {
             availableFields = availableFields.filter(field => fieldTypes[field] === 'double');
         }
-
-        // 2. 중복 제거 (현재 필드에서 선택한 값은 제외하지 않음)
         availableFields = availableFields.filter(field =>
             !selectedFields.includes(field) || field === currentValue
         );
 
-        // 옵션 재생성
-        fieldSelect.innerHTML = '<option value="">필드 선택</option>';
+        // 옵션 변경사항 준비
+        const newOptions = ['<option value="">필드 선택</option>'];
         availableFields.forEach(field => {
             const typeLabel = fieldTypes[field] === 'string' ? '[문자]' : '[숫자]';
-            const option = document.createElement('option');
-            option.value = field;
-            option.textContent = `${typeLabel} ${field}`;
-            fieldSelect.appendChild(option);
+            const selected = field === currentValue ? ' selected' : '';
+            newOptions.push(`<option value="${field}"${selected}>${typeLabel} ${field}</option>`);
         });
 
-        // 기존 선택값 복원 (가능한 경우)
-        if (currentValue && availableFields.includes(currentValue)) {
-            fieldSelect.value = currentValue;
-        }
-    }
-
-    checkFormComplete();
-}
-
-function updateAxisMapping() {
-    const dimension = parseInt(document.getElementById('dimensionSelect').value);
-    const container = document.getElementById('axisMapping');
-
-    if (!dimension) {
-        container.innerHTML = '';
-        updateChartTypes([]);
-        return;
-    }
-
-    const fieldTypes = analyzeFieldTypes(globalData);
-    const fields = Object.keys(fieldTypes);
-
-    container.innerHTML = '';
-
-    const axisNames = ['X축', 'Y축', 'Z축', 'W축'];
-    const axisIds = ['xAxis', 'yAxis', 'zAxis', 'wAxis'];
-    const axisDescriptions = [
-        '가로축 (문자열/숫자)',
-        '세로축 (숫자만)',
-        '크기/색상 (숫자만)',
-        '추가 인코딩 (숫자만)'
-    ];
-
-    // 수정: 차원수만큼만 축 생성 (value 필드 제외)
-    for (let i = 0; i < dimension; i++) {
-        const div = document.createElement('div');
-        div.className = 'axis-selector';
-
-        const label = document.createElement('label');
-        label.innerHTML = `${axisNames[i]}:<br><small>${axisDescriptions[i]}</small>`;
-
-        const select = document.createElement('select');
-        select.id = axisIds[i];
-        select.onchange = updateAllAxisOptions; // 수정: 모든 축 옵션 업데이트
-
-        select.innerHTML = '<option value="">필드 선택</option>';
-
-        div.appendChild(label);
-        div.appendChild(select);
-        container.appendChild(div);
-    }
-
-    // 초기 축 옵션 업데이트
-    updateAllAxisOptions();
-    updateChartTypes(getAvailableChartTypes(dimension));
-}
-
-// 새로운 함수: 모든 축의 옵션을 업데이트 (중복 방지)
-function updateAllAxisOptions() {
-    const dimension = parseInt(document.getElementById('dimensionSelect').value);
-    if (!dimension) return;
-
-    const fieldTypes = analyzeFieldTypes(globalData);
-    const fields = Object.keys(fieldTypes);
-    const axisIds = ['xAxis', 'yAxis', 'zAxis', 'wAxis'];
-
-    // 현재 선택된 필드들 수집
-    const selectedFields = [];
-    for (let i = 0; i < dimension; i++) {
-        const axisSelect = document.getElementById(axisIds[i]);
-        if (axisSelect && axisSelect.value) {
-            selectedFields.push(axisSelect.value);
-        }
-    }
-
-    console.log('[AXIS_UPDATE] 선택된 필드들:', selectedFields);
-
-    // 각 축의 옵션 업데이트
-    for (let i = 0; i < dimension; i++) {
-        const axisSelect = document.getElementById(axisIds[i]);
-        if (!axisSelect) continue;
-
-        const currentValue = axisSelect.value; // 현재 선택값 보존
-
-        // 사용 가능한 필드 필터링
-        let availableFields = fields;
-
-        // 1. 타입 제한 (X축은 모든 타입, 나머지는 숫자만)
-        if (i > 0) {
-            availableFields = availableFields.filter(field => fieldTypes[field] === 'double');
-        }
-
-        // 2. 중복 제거 (현재 축에서 선택한 값은 제외하지 않음)
-        availableFields = availableFields.filter(field =>
-            !selectedFields.includes(field) || field === currentValue
-        );
-
-        // 옵션 재생성
-        axisSelect.innerHTML = '<option value="">필드 선택</option>';
-        availableFields.forEach(field => {
-            const typeLabel = fieldTypes[field] === 'string' ? '[문자]' : '[숫자]';
-            const option = document.createElement('option');
-            option.value = field;
-            option.textContent = `${typeLabel} ${field}`;
-            axisSelect.appendChild(option);
+        updates.push({
+            select: fieldSelect,
+            html: newOptions.join('')
         });
+    }
 
-        // 기존 선택값 복원 (가능한 경우)
-        if (currentValue && availableFields.includes(currentValue)) {
-            axisSelect.value = currentValue;
+    // 배치 DOM 업데이트
+    updates.forEach(update => {
+        if (update.select.innerHTML !== update.html) {
+            update.select.innerHTML = update.html;
         }
-    }
-
-    // Value 필드 옵션 업데이트
-    updateValueFieldOptions();
-}
-
-function updateValueFieldOptions() {
-    const dimension = parseInt(document.getElementById('dimensionSelect').value);
-    if (!dimension) return;
-
-    // 축에서 사용된 필드들 수집
-    const usedFields = [];
-    const axisIds = ['xAxis', 'yAxis', 'zAxis', 'wAxis'];
-
-    for (let i = 0; i < dimension; i++) {
-        const axisValue = document.getElementById(axisIds[i])?.value;
-        if (axisValue) usedFields.push(axisValue);
-    }
-
-    console.log('[VALUE_UPDATE] 축에서 사용된 필드들:', usedFields);
-
-    // Value 필드 선택기 생성 (없는 경우)
-    let valueSelector = document.getElementById('valueFieldSelector');
-    if (!valueSelector) {
-        valueSelector = document.createElement('div');
-        valueSelector.id = 'valueFieldSelector';
-        valueSelector.className = 'axis-selector';
-
-        const label = document.createElement('label');
-        label.innerHTML = 'Value 필드:<br><small>출력 변수 (모든 타입)</small>';
-
-        const select = document.createElement('select');
-        select.id = 'valueField';
-        select.onchange = checkFormComplete;
-
-        valueSelector.appendChild(label);
-        valueSelector.appendChild(select);
-        document.getElementById('axisMapping').appendChild(valueSelector);
-    }
-
-    // Value 필드 옵션 업데이트
-    const valueSelect = document.getElementById('valueField');
-    const fieldTypes = analyzeFieldTypes(globalData);
-    const allFields = Object.keys(fieldTypes);
-    const availableFields = allFields.filter(field => !usedFields.includes(field));
-
-    console.log('[VALUE_UPDATE] Value 필드 사용 가능한 필드들:', availableFields);
-
-    const currentValue = valueSelect.value; // 현재 선택값 보존
-
-    valueSelect.innerHTML = '<option value="">Value 필드 선택</option>';
-    availableFields.forEach(field => {
-        const typeLabel = fieldTypes[field] === 'string' ? '[문자]' : '[숫자]';
-        const option = document.createElement('option');
-        option.value = field;
-        option.textContent = `${typeLabel} ${field}`;
-        valueSelect.appendChild(option);
     });
-
-    // 기존 선택값 복원 (가능한 경우)
-    if (currentValue && availableFields.includes(currentValue)) {
-        valueSelect.value = currentValue;
-    } else if (!availableFields.includes(currentValue)) {
-        valueSelect.value = ''; // 선택값이 더 이상 사용 불가능하면 초기화
-    }
 
     checkFormComplete();
 }
@@ -397,7 +182,6 @@ function checkFormComplete() {
 
     let allFieldsSelected = true;
     if (dimension) {
-        // 모든 필드가 선택되었는지 확인
         for (let i = 0; i < parseInt(dimension); i++) {
             const fieldElement = document.getElementById(`field${i}`);
             if (!fieldElement || !fieldElement.value) {
@@ -408,76 +192,15 @@ function checkFormComplete() {
     }
 
     const isComplete = dimension && chartType && allFieldsSelected;
-
-    console.log('[FORM_CHECK] 폼 완성 상태:', {
-        dimension: !!dimension,
-        chartType: !!chartType,
-        allFieldsSelected,
-        isComplete
-    });
-
     document.getElementById('createChartBtn').disabled = !isComplete;
 }
 
-function displayMetadata(metadata) {
-    const display = document.getElementById('metadataDisplay');
-    display.textContent = JSON.stringify(metadata, null, 2);
-}
-
-function displayChartInfo(convertedData, chartType, selectedFields) {
-    const info = document.getElementById('chartInfo');
-    const basicData = convertedData.basic_data;
-
-    const fieldsInfo = selectedFields.join(' → ');
-    const axisInfo = basicData.axes.map(axis =>
-        `${axis.name} (${axis.type}${axis.allow_dup ? ', 중복허용' : ''})`
-    ).join(' | ');
-
-    info.innerHTML = `
-        <strong>차트 타입:</strong> ${chartType} | 
-        <strong>차원:</strong> ${basicData.dim}D | 
-        <strong>선택된 필드:</strong> ${fieldsInfo}<br>
-        <strong>데이터 개수:</strong> ${convertedData.data_value.length}개 | 
-        <strong>축 정보:</strong> ${axisInfo}
-    `;
-}
-
 // ============================================================================
-// 메인 함수들
+// 차트 생성 함수 (새로운 통합 시스템 사용)
 // ============================================================================
-
-function loadDataFromSession() {
-    try {
-        const dataString = sessionStorage.getItem('generatedBinaryData');
-        if (!dataString) {
-            showError('세션에서 데이터를 찾을 수 없습니다. 데이터를 다시 생성해주세요.');
-            updateStatus('데이터 없음 - 데이터 생성기로 돌아가주세요', 'error');
-            return false;
-        }
-
-        globalData = JSON.parse(dataString);
-        console.log('📊 세션에서 데이터 로드:', globalData);
-
-        const pointCount = globalData.length;
-        const fieldNames = Object.keys(globalData[0] || {}).join(', ');
-
-        updateStatus(`✅ ${pointCount}개 데이터 로드 완료 | 필드: ${fieldNames}`, 'success');
-
-        updateDimensionOptions(globalData);
-        updateStepIndicator(2);
-
-        return true;
-
-    } catch (error) {
-        console.error('❌ 세션 데이터 로드 실패:', error);
-        showError('데이터 로드 실패: ' + error.message);
-        updateStatus('데이터 로드 실패', 'error');
-        return false;
-    }
-}
 
 window.createVisualization = function () {
-    if (globalData.length === 0) {
+    if (!raw_data || raw_data.length === 0) {
         showError('데이터를 먼저 생성해주세요');
         return;
     }
@@ -494,84 +217,73 @@ window.createVisualization = function () {
         }
     }
 
-    console.log('[CREATE_VIZ] 선택된 필드들:', selectedFields);
-
     if (selectedFields.length !== dimension) {
         showError('모든 필드를 선택해주세요');
-        return;
-    }
-
-    // 필드 타입 검증
-    const fieldTypes = analyzeFieldTypes(globalData);
-    const validation = validateSelectedFields(selectedFields, fieldTypes);
-    if (!validation.isValid) {
-        showError(validation.errors.join('; '));
         return;
     }
 
     try {
         updateStatus('시각화 생성 중...', 'info');
 
-        // 새로운 매핑 방식: 선택된 필드들을 순서대로 축에 할당
-        const fieldMapping = createFieldMapping(selectedFields, dimension);
-        console.log('[CREATE_VIZ] 필드 매핑:', fieldMapping);
+        // 데이터 매핑 생성
+        const dataMapping = createDataMapping(selectedFields, dimension);
+        console.log('[CREATE_VIZ] 데이터 매핑:', dataMapping);
 
-        // 데이터 변환
-        convertedData = convertToAxisFormat(globalData, fieldMapping.axisMapping, fieldMapping.valueField);
-        metadata = convertedData.basic_data;
-
-        // 스케일링 설정
-        const scalingConfig = {
-            type: document.getElementById('sizeScaling').value,
-            params: document.getElementById('sizeScaling').value === 'sigmoid' ?
-                { k: parseFloat(document.getElementById('sigmoidK').value) } : {}
-        };
-
-        // 데이터 준비
-        const preparedData = prepareDataForChart(convertedData.data_value, convertedData.basic_data.axes);
-
-        // 데이터셋 객체 생성
-        const dataset = {
-            name: `${chartType} Chart`,
-            dimension: dimension,
-            axes: convertedData.basic_data.axes,
-            dataType: `${dimension}D`
-        };
-
-        const vizType = {
-            name: chartType,
-            type: chartType
+        // 차트 설정 생성
+        const chartConfig = {
+            type: chartType,
+            dataMapping: dataMapping,
+            options: {
+                plugins: {
+                    title: {
+                        display: true,
+                        text: `${chartType} Chart (${dimension}D)`
+                    }
+                }
+            }
         };
 
         // 기존 차트 정리
-        if (currentChart) {
-            currentChart.destroy();
-            currentChart = null;
+        if (currentChartWrapper) {
+            currentChartWrapper.destroy();
+            currentChartWrapper = null;
         }
 
-        // 차트 컨테이너 표시
+        // 차트 컨테이너 준비
         const chartContainer = document.getElementById('chartContainer');
         chartContainer.style.display = 'block';
-        const canvas = document.getElementById('chart');
+        chartContainer.innerHTML = `
+            <h3>시각화 결과</h3>
+            <div id="chartInfo" class="chart-info">차트 정보가 여기에 표시됩니다</div>
+            <div class="chart-canvas-wrapper" style="flex: 1; position: relative; min-height: 300px;">
+            </div>
+        `;
 
-        // GitHub 차트 시스템 활용하여 차트 생성
-        const chartConfig = createVisualization(
-            dataset,
-            vizType,
-            preparedData,
-            scalingConfig,
-            {},
-            {}
-        );
+        const canvasWrapper = chartContainer.querySelector('.chart-canvas-wrapper');
 
-        // Chart.js 인스턴스 생성
-        currentChart = new Chart(canvas, chartConfig);
+        // 🆕 새로운 통합 시스템으로 차트 생성
+        currentChartWrapper = generateChart(raw_data, chartConfig, canvasWrapper);
+
+        // 이벤트 리스너 등록
+        currentChartWrapper.on('dataUpdated', (newData) => {
+            console.log('[CHART] 데이터 업데이트:', newData.length, '개');
+        });
+
+        currentChartWrapper.on('resized', (dimensions) => {
+            console.log('[CHART] 크기 변경:', dimensions);
+        });
+
+        currentChartWrapper.on('error', (error) => {
+            console.error('[CHART] 차트 에러:', error);
+            showError('차트 오류: ' + error.message);
+        });
+
+        currentChartWrapper.on('destroyed', () => {
+            console.log('[CHART] 차트 정리됨');
+        });
 
         // UI 업데이트
-        displayMetadata(metadata);
-        displayChartInfo(convertedData, chartType, selectedFields);
-        document.getElementById('metadataSection').style.display = 'block';
-
+        displayChartInfo(chartType, selectedFields, raw_data.length);
         updateStatus('시각화 생성 완료!', 'success');
         updateStepIndicator(3);
 
@@ -582,62 +294,49 @@ window.createVisualization = function () {
     }
 };
 
-// 새로운 함수: 선택된 필드들을 축에 매핑
-function createFieldMapping(selectedFields, dimension) {
-    const axisMapping = {};
-    let valueField;
+// 데이터 매핑 생성 함수
+function createDataMapping(selectedFields, dimension) {
+    const mapping = {};
 
-    if (dimension === 1) {
-        // 1차원: 하나의 필드만 사용
-        axisMapping.x = selectedFields[0];
-        valueField = selectedFields[0]; // 같은 필드를 value로도 사용
-    } else if (dimension === 2) {
-        // 2차원: X축, Y축
-        axisMapping.x = selectedFields[0];
-        axisMapping.y = selectedFields[1];
-        valueField = selectedFields[0]; // 첫 번째 필드를 value로 사용
-    } else if (dimension === 3) {
-        // 3차원: X축, Y축, 크기/색상
-        axisMapping.x = selectedFields[0];
-        axisMapping.y = selectedFields[1];
-        axisMapping.z = selectedFields[2];
-        valueField = selectedFields[0]; // 첫 번째 필드를 value로 사용
-    } else if (dimension === 4) {
-        // 4차원: X축, Y축, 크기, 색상
-        axisMapping.x = selectedFields[0];
-        axisMapping.y = selectedFields[1];
-        axisMapping.z = selectedFields[2];
-        axisMapping.w = selectedFields[3];
-        valueField = selectedFields[0]; // 첫 번째 필드를 value로 사용
+    if (dimension >= 1) mapping.x = selectedFields[0];
+    if (dimension >= 2) mapping.y = selectedFields[1];
+    if (dimension >= 3) {
+        // 3차원에서는 size 또는 color 중 하나
+        mapping.size = selectedFields[2];
+    }
+    if (dimension >= 4) {
+        // 4차원에서는 size와 color 모두
+        mapping.color = selectedFields[3];
     }
 
-    console.log('[FIELD_MAPPING] 축 매핑:', axisMapping, 'Value:', valueField);
-
-    return { axisMapping, valueField };
+    return mapping;
 }
 
-// 새로운 함수: 선택된 필드들의 타입 검증
-function validateSelectedFields(selectedFields, fieldTypes) {
-    const errors = [];
+// 차트 정보 표시
+function displayChartInfo(chartType, selectedFields, dataCount) {
+    const info = document.getElementById('chartInfo');
+    const fieldsInfo = selectedFields.join(' → ');
 
-    // 첫 번째 필드는 모든 타입 허용
-    // 나머지 필드들은 숫자만 허용
-    for (let i = 1; i < selectedFields.length; i++) {
-        const fieldName = selectedFields[i];
-        const fieldType = fieldTypes[fieldName];
-
-        if (fieldType === 'string') {
-            errors.push(`필드 ${i + 1} (${fieldName})은 문자열입니다. 두 번째 필드부터는 숫자만 사용할 수 있습니다.`);
-        }
-    }
-
-    return {
-        isValid: errors.length === 0,
-        errors: errors
-    };
+    info.innerHTML = `
+        <strong>차트 타입:</strong> ${chartType} | 
+        <strong>차원:</strong> ${selectedFields.length}D | 
+        <strong>선택된 필드:</strong> ${fieldsInfo}<br>
+        <strong>데이터 개수:</strong> ${dataCount}개
+    `;
 }
 
+// 데이터 생성기로 돌아가기 (데이터 정리)
 window.goBackToGenerator = function () {
+    // 현재 차트 정리
+    if (currentChartWrapper) {
+        currentChartWrapper.destroy();
+        currentChartWrapper = null;
+    }
+
+    // 전역 데이터 정리
+    clearAllChartData();
+    raw_data = null;
+
     window.location.href = 'index.html';
 };
 
@@ -654,17 +353,28 @@ document.addEventListener('DOMContentLoaded', () => {
         sigmoidContainer.style.display = this.value === 'sigmoid' ? 'flex' : 'none';
     });
 
-    // 세션에서 데이터 로드
-    if (!loadDataFromSession()) {
-        // 데이터가 없으면 뒤로가기 버튼만 활성화
-        const backBtn = document.querySelector('.secondary-btn');
-        if (backBtn) backBtn.style.display = 'block';
+    // 전역 데이터 가져오기
+    raw_data = getRawData();
+
+    if (!raw_data || raw_data.length === 0) {
+        updateStatus('데이터가 없습니다. 데이터 생성기로 돌아가주세요.', 'error');
+        // 뒤로가기 버튼만 표시
+        document.getElementById('chartConfigSection').style.display = 'none';
+        return;
     }
+
+    const pointCount = raw_data.length;
+    const fieldNames = Object.keys(raw_data[0] || {}).join(', ');
+
+    updateStatus(`✅ ${pointCount}개 데이터 로드 완료 | 필드: ${fieldNames}`, 'success');
+    updateDimensionOptions(raw_data);
+    updateStepIndicator(2);
 });
 
 // 페이지 언로드시 정리
 window.addEventListener('beforeunload', () => {
-    if (currentChart) {
-        currentChart.destroy();
+    if (currentChartWrapper) {
+        currentChartWrapper.destroy();
     }
+    clearAllChartData();
 });

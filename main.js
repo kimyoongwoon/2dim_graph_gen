@@ -1,17 +1,20 @@
-// main.js
-// index.htmlÀÇ µ¥ÀÌÅÍ »ı¼º ·ÎÁ÷
+ï»¿// ============================================================================
+// main.js - ë°ì´í„° ìƒì„± í˜ì´ì§€ ë¡œì§ (sessionStorage ì œê±°, ì „ì—­ë³€ìˆ˜ ì‚¬ìš©)
+// ============================================================================
 
 import { loadBinaryData, displayDataTable } from './chart_gen/data_load.js';
+import { setRawData, clearAllChartData } from './chart_gen/unified/index.js';
 
+// ì „ì—­ ë³€ìˆ˜
+let raw_data = null;
 let dataProvider = null;
-let globalData = [];
 
-// »óÅÂ ¾÷µ¥ÀÌÆ®
+// ìƒíƒœ ì—…ë°ì´íŠ¸ í•¨ìˆ˜
 function updateStatus(message, type = 'info') {
     console.log(`[STATUS] ${message}`);
-    const statusEl = document.getElementById('status');
-    statusEl.textContent = message;
-    statusEl.className = `status ${type}`;
+    const statusDiv = document.getElementById('status');
+    statusDiv.innerHTML = `<strong>${message}</strong>`;
+    statusDiv.className = `status ${type}`;
 }
 
 function updateStepIndicator(activeStep) {
@@ -23,92 +26,92 @@ function updateStepIndicator(activeStep) {
     }
 }
 
-function getSelectedFields() {
-    const checkboxes = document.querySelectorAll('.field-checkbox input[type="checkbox"]:checked');
-    return Array.from(checkboxes).map(cb => cb.value);
-}
-
-function showError(message) {
-    updateStatus(`¿À·ù: ${message}`, 'error');
-}
-
-// µ¥ÀÌÅÍ »ı¼º
+// ë°ì´í„° ìƒì„± í•¨ìˆ˜
 window.generateData = function () {
-    const selectedFields = getSelectedFields();
-    const count = parseInt(document.getElementById('dataCount').value);
+    const checkboxes = document.querySelectorAll('.field-selection input[type="checkbox"]:checked');
+    const dataCount = parseInt(document.getElementById('dataCount').value);
 
-    console.log('[GENERATE] ¼±ÅÃµÈ ÇÊµå:', selectedFields);
-
-    if (selectedFields.length === 0) {
-        showError('ÃÖ¼Ò ÇÏ³ªÀÇ ÇÊµå¸¦ ¼±ÅÃÇØÁÖ¼¼¿ä');
+    if (checkboxes.length === 0) {
+        updateStatus('ìµœì†Œ í•˜ë‚˜ì˜ í•„ë“œë¥¼ ì„ íƒí•´ì£¼ì„¸ìš”', 'error');
         return;
     }
 
-    if (selectedFields.length < 2) {
-        showError('ÃÖ¼Ò 2°³ÀÇ ÇÊµå¸¦ ¼±ÅÃÇØÁÖ¼¼¿ä');
+    if (!dataCount || dataCount < 1 || dataCount > 10000) {
+        updateStatus('ë°ì´í„° ê°œìˆ˜ëŠ” 1-10000 ì‚¬ì´ì—¬ì•¼ í•©ë‹ˆë‹¤', 'error');
         return;
     }
 
-    // ÃÖ´ë Â÷¿ø¼ö °è»ê (¼±ÅÃµÈ ÇÊµå ¼ö¿Í µ¿ÀÏ, ÃÖ´ë 4Â÷¿ø)
-    const maxDimension = Math.min(selectedFields.length, 4);
-    console.log('[GENERATE] ÃÖ´ë »ı¼º °¡´ÉÇÑ Â÷¿ø¼ö:', maxDimension);
+    updateStatus('ë°ì´í„° ìƒì„± ì¤‘...', 'info');
 
-    updateStatus(`µ¥ÀÌÅÍ »ı¼º Áß... (${selectedFields.join(', ')}, ${count}°³) - ÃÖ´ë ${maxDimension}Â÷¿ø±îÁö ¼³Á¤ °¡´É`, 'info');
-    updateStepIndicator(1);
+    try {
+        const selectedFields = Array.from(checkboxes).map(cb => cb.value);
+        console.log('[MAIN] ì„ íƒëœ í•„ë“œ:', selectedFields);
 
-    dataProvider.generateData(selectedFields, count, () => {
-        loadData();
-    });
+        // C++ DataProvider í˜¸ì¶œ
+        dataProvider.generateData(selectedFields, dataCount);
+
+        // ë°”ì´ë„ˆë¦¬ ë°ì´í„° ë¡œë“œ
+        loadBinaryData(dataProvider, (data) => {
+            raw_data = data;
+            setRawData(data); // í†µí•© ì‹œìŠ¤í…œì— ë°ì´í„° ì„¤ì •
+
+            const fieldNames = Object.keys(data[0] || {}).join(', ');
+            updateStatus(`âœ… ${dataCount}ê°œ ë°ì´í„° ìƒì„± ì™„ë£Œ | í•„ë“œ: ${fieldNames}`, 'success');
+
+            // ë¯¸ë¦¬ë³´ê¸° í‘œì‹œ
+            displayDataPreview(data);
+            updateStepIndicator(2);
+
+            // ì°¨íŠ¸ ìƒì„± ë²„íŠ¼ í™œì„±í™”
+            document.getElementById('goToChartBtn').disabled = false;
+        });
+
+    } catch (error) {
+        console.error('[MAIN] ë°ì´í„° ìƒì„± ì˜¤ë¥˜:', error);
+        updateStatus('ë°ì´í„° ìƒì„± ì‹¤íŒ¨: ' + error.message, 'error');
+    }
 };
 
-function loadData() {
-    try {
-        loadBinaryData(dataProvider, (data) => {
-            globalData = data;
+// ë°ì´í„° ë¯¸ë¦¬ë³´ê¸° í‘œì‹œ
+function displayDataPreview(data) {
+    const section = document.getElementById('dataPreviewSection');
+    const table = document.getElementById('dataTable');
 
-            // ¼¼¼Ç ½ºÅä¸®Áö¿¡ ÀúÀå (´ÙÀ½ ÆäÀÌÁö¿¡¼­ »ç¿ë)
-            sessionStorage.setItem('generatedBinaryData', JSON.stringify(data));
-
-            displayDataTable(data, document.getElementById('dataTable'));
-            document.getElementById('dataPreviewSection').style.display = 'block';
-            document.getElementById('goToChartBtn').disabled = false;
-
-            updateStatus(`${data.length}°³ µ¥ÀÌÅÍ »ı¼º ¿Ï·á - Â÷Æ® »ı¼º ÆäÀÌÁö·Î ÀÌµ¿ÇØÁÖ¼¼¿ä`, 'success');
-            updateStepIndicator(2);
-        });
-    } catch (error) {
-        console.error('[LOAD] µ¥ÀÌÅÍ ·Îµå ¿À·ù:', error);
-        showError('µ¥ÀÌÅÍ ·Îµù ½ÇÆĞ: ' + error.message);
-    }
+    displayDataTable(data, table);
+    section.style.display = 'block';
 }
 
-// Â÷Æ® ÆäÀÌÁö·Î ÀÌµ¿
+// ì°¨íŠ¸ í˜ì´ì§€ë¡œ ì´ë™ (sessionStorage ëŒ€ì‹  ë©”ëª¨ë¦¬ ë°ì´í„° ì‚¬ìš©)
 window.goToVisualization = function () {
+    if (!raw_data || raw_data.length === 0) {
+        updateStatus('ë¨¼ì € ë°ì´í„°ë¥¼ ìƒì„±í•´ì£¼ì„¸ìš”', 'error');
+        return;
+    }
+
+    console.log('[MAIN] ì°¨íŠ¸ í˜ì´ì§€ë¡œ ì´ë™, ë°ì´í„°:', raw_data.length, 'ê°œ');
     window.location.href = 'graph_complete.html';
 };
 
-// ÆäÀÌÁö ·Îµå½Ã ÃÊ±âÈ­
+// QWebChannel ì´ˆê¸°í™”
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('=== µ¥ÀÌÅÍ »ı¼º ÆäÀÌÁö ÃÊ±âÈ­ ===');
+    console.log('=== ë°ì´í„° ìƒì„± í˜ì´ì§€ ì´ˆê¸°í™” ===');
 
-    // QWebChannelÀÌ ÀÌ¹Ì ·ÎµåµÇ¾î ÀÖ´ÂÁö È®ÀÎ
+    updateStepIndicator(1);
+
+    // QWebChannel ì—°ê²°
     if (typeof QWebChannel !== 'undefined') {
-        initializeWebChannel();
+        new QWebChannel(qt.webChannelTransport, (channel) => {
+            dataProvider = channel.objects.dataProvider;
+            console.log('[MAIN] DataProvider ì—°ê²° ì™„ë£Œ');
+            updateStatus('ë°ì´í„° ìƒì„±ê¸° ì¤€ë¹„ ì™„ë£Œ', 'success');
+        });
     } else {
-        console.warn('[MAIN] QWebChannel not found - make sure qrc script is loaded');
-        updateStatus('QWebChannel ·Îµù ½ÇÆĞ - HTML¿¡¼­ qrc ½ºÅ©¸³Æ®¸¦ È®ÀÎÇØÁÖ¼¼¿ä', 'error');
+        console.warn('[MAIN] QWebChannel ì‚¬ìš© ë¶ˆê°€ - í…ŒìŠ¤íŠ¸ ëª¨ë“œ');
+        updateStatus('í…ŒìŠ¤íŠ¸ ëª¨ë“œ - QWebChannel ì—°ê²° ì—†ìŒ', 'info');
     }
 });
 
-function initializeWebChannel() {
-    // QWebChannel ¿¬°á
-    new QWebChannel(qt.webChannelTransport, channel => {
-        dataProvider = channel.objects.dataProvider;
-        if (dataProvider) {
-            updateStatus('DataProvider ¿¬°á ¿Ï·á - ÇÊµå¸¦ ¼±ÅÃÇÏ°í µ¥ÀÌÅÍ¸¦ »ı¼ºÇØÁÖ¼¼¿ä', 'success');
-        } else {
-            updateStatus('DataProvider ¿¬°á ½ÇÆĞ', 'error');
-            showError('DataProvider ¿¬°á¿¡ ½ÇÆĞÇß½À´Ï´Ù. C++ ¾ÖÇÃ¸®ÄÉÀÌ¼ÇÀ» È®ÀÎÇØÁÖ¼¼¿ä.');
-        }
-    });
-}
+// í˜ì´ì§€ ì–¸ë¡œë“œì‹œ ë°ì´í„° ì •ë¦¬
+window.addEventListener('beforeunload', () => {
+    clearAllChartData();
+});
