@@ -1,24 +1,18 @@
 // ============================================================================
-// graph_complete.js - 성능 최적화 버전 (디버깅 로그 최소화)
+// graph_complete.js - 차트 생성 페이지 로직 (data_pipeline 모듈 사용)
 // ============================================================================
 
-import { loadFromSessionStorage, getStorageInfo } from './chart_data/data_load.js';
 import {
-    analyzeFieldTypes,
-    getAvailableChartTypes,
-    calculateAvailableDimensions,
-    validateFieldConstraints,
-    checkFormCompleteness,
-    getFieldDescription
-} from './chart_data/data_validate.js';
-import {
-    createDataMapping,
-    createChartConfig,
-    prepareGenerateChartParams,
-    validateCompleteConfiguration
-} from './chart_data/data_processor.js';
+    sessionStorageManager,
+    dataValidator,
+    dimensionCalculator,
+    chartTypeProvider,
+    configBuilder,
+    containerCreator
+} from './data_pipeline/index.js';
+
 import { showError, clearAllChartData } from './shared/error_handler.js';
-import { generateChart } from './chart_gen/index.js';
+import { generateChart } from './2dim_chart_gen/index.js';
 
 // 전역 변수들
 let currentChartWrapper = null;
@@ -35,20 +29,23 @@ function debugLog(...args) {
 }
 
 // ============================================================================
-// 데이터 로드 함수 (성능 최적화)
+// 데이터 로드 함수 (data_pipeline 모듈 사용)
 // ============================================================================
 
 function loadDataFromSessionStorage() {
     updateStatus('저장된 데이터 로드 중...', 'info');
 
     try {
-        const { data, meta } = loadFromSessionStorage();
+        // 🔄 data_pipeline 모듈 사용: sessionStorage에서 데이터 로드
+        const { data, meta } = sessionStorageManager.loadRawDataFromSessionStorage();
         raw_data = data;
 
         const fieldNames = meta.fieldNames.join(', ');
         updateStatus(`✅ ${data.length}개 데이터 로드 완료 | 필드: ${fieldNames}`, 'success');
 
-        fieldTypes = analyzeFieldTypes(data);
+        // 🔄 data_pipeline 모듈 사용: 필드 타입 분석
+        fieldTypes = dataValidator.analyzeDataFieldTypes(data);
+
         initializeUI(data);
         updateStepIndicator(2);
         document.getElementById('chartConfigSection').style.display = 'block';
@@ -61,7 +58,8 @@ function loadDataFromSessionStorage() {
 }
 
 function initializeUI(data) {
-    const maxDimensions = calculateAvailableDimensions(data);
+    // 🔄 data_pipeline 모듈 사용: 사용 가능한 최대 차원수 계산
+    const maxDimensions = dimensionCalculator.calculateAvailableDimensionsFromData(data);
     updateDimensionOptions(maxDimensions);
 }
 
@@ -89,7 +87,7 @@ function updateStepIndicator(activeStep) {
 }
 
 // ============================================================================
-// UI 업데이트 함수들 (성능 최적화)
+// UI 업데이트 함수들 (data_pipeline 모듈 사용)
 // ============================================================================
 
 function updateDimensionOptions(maxDimensions) {
@@ -129,7 +127,8 @@ function updateFieldSelection() {
         div.className = 'axis-selector';
 
         const label = document.createElement('label');
-        label.innerHTML = `필드 ${i + 1}:<br><small>${getFieldDescription(i, dimension)}</small>`;
+        // 🔄 data_pipeline 모듈 사용: 필드 설명 가져오기
+        label.innerHTML = `필드 ${i + 1}:<br><small>${dataValidator.getFieldDescription(i, dimension)}</small>`;
 
         const select = document.createElement('select');
         select.id = `field${i}`;
@@ -146,8 +145,14 @@ function updateFieldSelection() {
 
     updateAllFieldOptions();
 
-    const chartTypes = getAvailableChartTypes(dimension);
-    updateChartTypes(chartTypes);
+    // 🔄 data_pipeline 모듈 사용: 호환 가능한 차트 타입 가져오기
+    try {
+        const chartTypes = chartTypeProvider.getCompatibleChartTypesForData(raw_data, dimension);
+        updateChartTypes(chartTypes);
+    } catch (error) {
+        console.error('[CHART] 차트 타입 조회 오류:', error);
+        updateChartTypes([]);
+    }
 }
 
 function updateChartTypes(types) {
@@ -157,7 +162,10 @@ function updateChartTypes(types) {
     select.innerHTML = '<option value="">차트 타입 선택</option>';
 
     types.forEach(type => {
-        select.innerHTML += `<option value="${type.value}">${type.label}</option>`;
+        const optionText = type.priority ?
+            `${type.label} (추천도: ${type.priority})` :
+            type.label;
+        select.innerHTML += `<option value="${type.value}">${optionText}</option>`;
     });
 
     select.onchange = checkFormComplete;
@@ -230,7 +238,19 @@ function checkFormComplete() {
         }
     }
 
-    const isComplete = checkFormCompleteness(dimension, chartType, selectedFields);
+    // 🔄 data_pipeline 모듈 사용: 폼 완성도 검증
+    let isComplete = false;
+    try {
+        isComplete = dataValidator.validateFormCompleteness({
+            dimension,
+            chartType,
+            selectedFields
+        });
+    } catch (error) {
+        debugLog('[CHART] 폼 완성도 검증 오류:', error);
+        isComplete = false;
+    }
+
     const createBtn = document.getElementById('createChartBtn');
     if (createBtn) {
         createBtn.disabled = !isComplete;
@@ -251,7 +271,7 @@ function displayChartInfo(chartType, selectedFields, dataCount) {
 }
 
 // ============================================================================
-// 차트 생성 함수 (성능 최적화)
+// 차트 생성 함수 (data_pipeline 모듈 사용)
 // ============================================================================
 
 window.createVisualization = async function () {
@@ -291,22 +311,29 @@ window.createVisualization = async function () {
     try {
         updateStatus('시각화 생성 중...', 'info');
 
-        // 검증 (간소화)
-        const fieldValidation = validateFieldConstraints(selectedFields, fieldTypes, dimension);
-        if (!fieldValidation.isValid) {
-            showError(`필드 제약 오류: ${fieldValidation.errors.join(', ')}`);
+        // 🔄 data_pipeline 모듈 사용: 사용자 입력 종합 검증
+        const validationResult = dataValidator.validateUserSelectionInput(
+            { dimension, chartType, selectedFields },
+            raw_data
+        );
+
+        if (!validationResult.isValid) {
+            showError(`입력 검증 오류: ${validationResult.errors.join(', ')}`);
             return;
         }
 
-        const userSelections = { dimension, chartType, selectedFields };
-        const configValidation = validateCompleteConfiguration(raw_data, userSelections, fieldTypes);
-
-        if (!configValidation.isValid) {
-            showError(`설정 검증 오류: ${configValidation.errors.join(', ')}`);
-            return;
+        // 경고가 있으면 표시
+        if (validationResult.warnings && validationResult.warnings.length > 0) {
+            console.warn('[CHART] 검증 경고:', validationResult.warnings);
         }
 
-        const { chartConfig } = prepareGenerateChartParams(raw_data, userSelections);
+        // 🔄 data_pipeline 모듈 사용: 차트 config 생성
+        const config = configBuilder.buildChartConfigForGeneration(
+            chartType,
+            selectedFields,
+            dimension,
+            {} // 추가 옵션은 나중에 확장 가능
+        );
 
         // 기존 차트 정리
         if (currentChartWrapper) {
@@ -322,11 +349,13 @@ window.createVisualization = async function () {
                 return;
             }
 
-            chartContainer.style.display = 'block';
+            chartContainer.style.display = 'flex';
+            chartContainer.style.flexDirection = 'column';
+            chartContainer.style.height = '600px'; // 🔥 명시적 높이 설정
             chartContainer.innerHTML = `
                 <h3>시각화 결과</h3>
                 <div id="chartInfo" class="chart-info">차트 정보가 여기에 표시됩니다</div>
-                <div class="chart-canvas-wrapper" style="flex: 1; position: relative; min-height: 300px;">
+                <div class="chart-canvas-wrapper" style="flex: 1; position: relative; min-height: 400px; height: 400px;">
                 </div>
             `;
 
@@ -340,7 +369,19 @@ window.createVisualization = async function () {
             setTimeout(() => {
                 try {
                     console.time('실제차트생성');
-                    currentChartWrapper = generateChart(raw_data, chartConfig, canvasWrapper);
+
+                    // 🔄 data_pipeline 모듈 사용: 차트 컨테이너 생성
+                    const containerElement = containerCreator.createChartContainerElement(
+                        canvasWrapper,
+                        {
+                            width: '100%',
+                            height: '100%',
+                            className: 'chart-container-generated'
+                        }
+                    );
+
+                    // generateChart 호출
+                    currentChartWrapper = generateChart(raw_data, config, containerElement);
                     console.timeEnd('실제차트생성');
 
                     // 이벤트 리스너 등록 (간소화)

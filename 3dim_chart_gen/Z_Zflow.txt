@@ -1,0 +1,140 @@
+1. **HTML & DOM 준비**
+
+   * `<div id="combinationButtons"></div>`
+     → 축 조합 버튼들이 붙을 영역
+   * `<div id="layoutContainer"></div>`
+     → GoldenLayout이 자리 잡을 영역
+
+2. **전역 스크립트 로드**
+
+   * `windowCounter`, `config`, `container_id` 정의
+   * 모든 함수(차원조합, 버튼 생성, 3D 그래프, 필터링, 매핑, 집계, 업데이트, 레이아웃 등록, 슬라이더/컨트롤 UI 등)가 전역으로 등록
+
+3. **GoldenLayout 인스턴스 생성**
+
+   ```js
+   const layout = new GoldenLayout(config, $('#layoutContainer'));
+   ```
+
+   * `config`의 빈 `row`로 시작
+   * 팝아웃·닫기 아이콘 숨김 설정 적용
+
+4. **‘3dGraph’ 컴포넌트 등록**
+
+   ```js
+   registerGraph(layout);
+   ```
+
+   * 내부에서 `layout.registerComponent('3dGraph', (container, state)=>{…})` 실행
+   * 이 콜백이 나중에 그래프 패널이 생성될 때 호출되어,
+
+     * `wrapper` 생성
+     * `state.visible`, `state.windowControl`, `state.plot_id` 초기화
+     * **Show 버튼**, **컨트롤 박스**, **슬라이더 박스**, **플롯 박스**를 순서대로 `wrapper.appendChild`
+     * `registerSliderContainer(state)`로 슬라이더 UI 생성
+     * `state.layout`에 Plotly 옵션 설정
+     * `requestAnimationFrame(()=>update3dGraph(state))` 로 첫 렌더링
+     * 리사이즈 핸들러 바인딩
+
+5. **레이아웃 초기화 완료 시점에 축 조합 버튼 생성**
+
+   ```js
+   layout.on('initialised', () => {
+     createGraphGenButton(received_data);
+   });
+   layout.init();
+   ```
+
+   * `generate3DGraphCombinations(received_data.dimensions)`
+     → `t`, `m…`, `p…` 조합 전부 뽑아내고
+   * `create3dAxisPairButtons(...)`
+     → `#combinationButtons`에 `<button>“x, y, z Graph”</button>`을 차례로 추가
+     → 클릭 시 `create3dGraph(received_data, {x,y,z})` 호출
+
+6. **사용자에게 보이는 최초 화면**
+
+   * 맨 위 `#combinationButtons` 영역에 수십 개의 “t, m1, m2 Graph” 같은 버튼들
+   * 빈 GoldenLayout 패널(아직 그래프 없음)
+
+7. **버튼 클릭 → `create3dGraph` 실행**
+
+   ```js
+   function create3dGraph(received_data, {x,y,z}) {
+     // layout.root.contentItems[0]이 없으면 row 생성
+     // layout.root.contentItems[0].addChild({ type:'component', componentName:'3dGraph', componentState:{…} })
+   }
+   ```
+
+   * 새 3D 그래프 패널이 GoldenLayout `row`에 추가됨
+
+8. **GoldenLayout이 ‘3dGraph’ 컴포넌트 콜백 실행**
+
+   * **wrapper** 안에 다음 순서로 UI 생성:
+
+     1. **Show 버튼 박스** (`register3dShowButtonBox`)
+
+        * “Show Both” / “Points Only” / “Surface Only” 버튼
+        * 각각 클릭 시 `state.visible.{surface,points}` 토글 → `update3dGraph(state)`
+     2. **컨트롤 박스** (`register3dControlBox`)
+
+        * 숫자 입력(`Start X`, `Count X`, `Start Y`, `Count Y`, `Compress`)
+
+          * `input`마다 `state.windowControl[key] = val` → `update3dGraph(state)`
+        * 드롭다운(`Aggregation`)
+
+          * 선택 변경 시 `state.windowControl.aggregation = value` → `update3dGraph(state)`
+     3. **슬라이더 영역**
+
+        * 빈 `<div class="slider-area">` 생성 후 `state.slider_box`에 저장
+     4. **플롯 영역**
+
+        * `<div id="plot3d_x_y_z" class="plot-area">`
+
+9. **슬라이더 생성** (`registerSliderContainer`)
+
+   * `state.dimensions` 중 `state.axes`에 없는 축을 골라
+   * 각 축별로 `min = Math.min(...)`, `max = Math.max(...)`, `init = min` 계산
+   * `registerSlider(state, axis, min, max, init)` 호출
+
+     * **레이블**: `<label>Label = <span>init</span></label>`
+     * **input\[type=range]**: `min, max, step=1, value=init`
+
+       * `input.on('input')` → 화면 `<span>` 갱신 + `state.slider_values[axis].value` 갱신 → `update3dGraph(state)`
+     * \*\*측정축(m\_)\*\*이면
+
+       * mode 버튼(≥, ≤, =) 생성 → 클릭 시 `state.slider_values[axis].mode` 변경 → `update3dGraph(state)`
+
+10. **초기 렌더링** → `update3dGraph(state)`
+
+    * **필터**: `filterSliderData(state.data, state.slider_values)`
+    * **좌표 목록**: 중복 제거+정렬된 `x_vals`, `y_vals`
+    * **윈도우 슬라이스**: `start_x/count_x`, `start_y/count_y`
+    * **맵 생성**: `createPointMap(filtered, ax1, ax2, ax3)`
+    * **집계 분기**
+
+      * `candlestick` → `renderCandlestick3D`
+      * 그 외 → `renderSurfaceAndScatter3D`
+    * **Plotly.react**로 실제 3D 그래프 그리기
+
+11. **그후 상호작용**
+
+    * **Show 버튼** 클릭 → 레이어 보이기/숨기기 → `update3dGraph`
+    * **컨트롤 입력** 변경 → `state.windowControl` 갱신 → `update3dGraph`
+    * **슬라이더 이동** → `state.slider_values` 갱신 + UI 갱신 → `update3dGraph`
+    * **모드 버튼**(m\_일 때) 클릭 → `state.slider_values[axis].mode` 변경 → `update3dGraph`
+    * **브라우저 리사이즈** → `Plotly.Plots.resize` 호출
+
+---
+
+이렇게,
+
+1. **페이지 로드**
+2. **GoldenLayout 초기화 & ‘3dGraph’ 등록**
+3. **축 조합 버튼 생성**
+4. **버튼 클릭 → create3dGraph → GoldenLayout에 새 패널 생성**
+5. **패널 생성 시 registerGraph 콜백 실행**
+6. **Show·Control·Slider·Plot 영역 구축**
+7. **update3dGraph → Plotly로 3D 그래프 렌더링**
+8. **각 UI 조작마다 update3dGraph 재실행**
+
+의 순서로, “어떤 UI 요소가 보이고, 어떤 JS 함수가 실행”되는지 단 한 단계도 빠뜨리지 않고 이어집니다.

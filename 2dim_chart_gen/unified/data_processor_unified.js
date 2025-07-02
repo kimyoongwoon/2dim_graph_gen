@@ -2,7 +2,7 @@
 // chart_gen/unified/data_processor_unified.js - 독립적 데이터 변환 (최적화됨)
 // ============================================================================
 
-import { analyzeFieldTypes } from '../../chart_data/data_validate.js';
+import { dataValidator } from '../../data_pipeline/index.js';
 
 /**
  * 원시 데이터를 차트용으로 변환하는 독립적 함수 (성능 최적화)
@@ -24,8 +24,8 @@ export function processDataForChart(rawData, dataMapping) {
         throw new Error('데이터 매핑이 필요합니다');
     }
 
-    // 필드 타입 분석
-    const fieldTypes = analyzeFieldTypes(rawData);
+    // 필드 타입 분석 (data_pipeline 모듈 사용)
+    const fieldTypes = dataValidator.analyzeDataFieldTypes(rawData);
     console.log('[DATA_PROCESSOR_UNIFIED] 필드 타입:', fieldTypes);
 
     // 매핑 필드명 존재 여부 확인 (강화된 디버깅)
@@ -106,7 +106,7 @@ export function processDataForChart(rawData, dataMapping) {
 
     // ✅ 성능 최적화: 차트용 데이터 변환 (원본 객체 직접 참조)
     console.log('[DATA_PROCESSOR_UNIFIED] === 성능 최적화된 데이터 변환 시작 ===');
-    
+
     const chartData = rawData.map((row, index) => {
         const dataPoint = {
             _originalIndex: index,
@@ -134,7 +134,7 @@ export function processDataForChart(rawData, dataMapping) {
 
     console.log('[DATA_PROCESSOR_UNIFIED] 변환 완료:', chartData.length, '개 포인트');
     console.log('[DATA_PROCESSOR_UNIFIED] 첫 번째 변환된 포인트 샘플:', chartData[0]);
-    
+
     return result;
 }
 

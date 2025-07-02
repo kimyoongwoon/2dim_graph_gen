@@ -1,16 +1,16 @@
 // ============================================================================
-// chart_gen/unified/error_handler.js - ï¿½ï¿½ï¿½ï¿½ Ã³ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+// shared/error_handler.js - ¿¡·¯ Ã³¸® ½Ã½ºÅÛ
 // ============================================================================
 
 /**
- * ï¿½Ï¹ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Þ½ï¿½ï¿½ï¿½ Ç¥ï¿½ï¿½ (ï¿½ï¿½ï¿½ï¿½ showError ï¿½Ô¼ï¿½)
- * @param {string} message - ï¿½ï¿½ï¿½ï¿½ ï¿½Þ½ï¿½ï¿½ï¿½
+ * ÀÏ¹Ý ¿¡·¯ ¸Þ½ÃÁö Ç¥½Ã (±âÁ¸ showError ÇÔ¼ö)
+ * @param {string} message - ¿¡·¯ ¸Þ½ÃÁö
  */
 export function showError(message) {
-    console.error('[ERROR_HANDLER] ï¿½ï¿½ï¿½ï¿½:', message);
+    console.error('[ERROR_HANDLER] ¿¡·¯:', message);
 
     const errorDiv = document.getElementById('errorDisplay') || createErrorDisplay();
-    errorDiv.textContent = `ï¿½ï¿½ï¿½ï¿½: ${message}`;
+    errorDiv.textContent = `¿¡·¯: ${message}`;
     errorDiv.style.display = 'block';
 
     setTimeout(() => {
@@ -19,7 +19,7 @@ export function showError(message) {
 }
 
 /**
- * ï¿½ï¿½ï¿½ï¿½ Ç¥ï¿½Ã¿ï¿½ div ï¿½ï¿½ï¿½ï¿½
+ * ¿¡·¯ Ç¥½Ã¿ë div »ý¼º
  */
 function createErrorDisplay() {
     const errorDiv = document.createElement('div');
@@ -39,18 +39,18 @@ function createErrorDisplay() {
 }
 
 /**
- * ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Æ® Ç¥ï¿½ï¿½
- * @param {HTMLElement} containerElement - ï¿½ï¿½ï¿½ï¿½ï¿½Ì³ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®
- * @param {string} errorMessage - ï¿½ï¿½ï¿½ï¿½ ï¿½Þ½ï¿½ï¿½ï¿½
- * @returns {Object} ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ã¼
+ * ¿¡·¯ Â÷Æ® Ç¥½Ã
+ * @param {HTMLElement} containerElement - ÄÁÅ×ÀÌ³Ê ¿¤¸®¸ÕÆ®
+ * @param {string} errorMessage - ¿¡·¯ ¸Þ½ÃÁö
+ * @returns {Object} ¿¡·¯ Â÷Æ® °´Ã¼
  */
-export function showError_chart(containerElement, errorMessage = 'ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ß½ï¿½ï¿½Ï´ï¿½') {
-    console.error('[ERROR_HANDLER] ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½:', errorMessage);
+export function showError_chart(containerElement, errorMessage = 'Â÷Æ® »ý¼º¿¡ ½ÇÆÐÇß½À´Ï´Ù') {
+    console.error('[ERROR_HANDLER] Â÷Æ® ¿¡·¯:', errorMessage);
 
-    // ï¿½ï¿½ï¿½ï¿½ï¿½Ì³ï¿½ ï¿½ï¿½ï¿½ï¿½
+    // ÄÁÅ×ÀÌ³Ê Á¤¸®
     containerElement.innerHTML = '';
 
-    // Äµï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+    // Äµ¹ö½º »ý¼º
     const canvas = document.createElement('canvas');
     canvas.width = containerElement.clientWidth || 400;
     canvas.height = containerElement.clientHeight || 300;
@@ -58,7 +58,7 @@ export function showError_chart(containerElement, errorMessage = 'ï¿½ï¿½Æ® ï¿½ï¿
     canvas.style.height = '100%';
     containerElement.appendChild(canvas);
 
-    // Äµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Þ½ï¿½ï¿½ï¿½ ï¿½×¸ï¿½ï¿½ï¿½
+    // Äµ¹ö½º¿¡ ¿¡·¯ ¸Þ½ÃÁö ±×¸®±â
     const ctx = canvas.getContext('2d');
     ctx.fillStyle = '#f8d7da';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -69,7 +69,7 @@ export function showError_chart(containerElement, errorMessage = 'ï¿½ï¿½Æ® ï¿½ï¿
     ctx.textBaseline = 'middle';
     ctx.fillText(errorMessage, canvas.width / 2, canvas.height / 2);
 
-    // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ã¼ ï¿½ï¿½È¯
+    // ¿¡·¯ Â÷Æ® °´Ã¼ ¹ÝÈ¯
     return {
         chart: null,
         on: () => { },
@@ -84,30 +84,30 @@ export function showError_chart(containerElement, errorMessage = 'ï¿½ï¿½Æ® ï¿½ï¿
     };
 }
 
-// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+// Àü¿ª µ¥ÀÌÅÍ °ü¸®
 let raw_data = null;
 
 /**
- * ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
- * @param {Array} data - ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * Àü¿ª µ¥ÀÌÅÍ ¼³Á¤
+ * @param {Array} data - ¿ø½Ã µ¥ÀÌÅÍ
  */
 export function setRawData(data) {
     raw_data = data;
-    console.log('[ERROR_HANDLER] ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½:', data?.length, 'ï¿½ï¿½');
+    console.log('[ERROR_HANDLER] Àü¿ª µ¥ÀÌÅÍ ¼³Á¤:', data?.length, '°³');
 }
 
 /**
- * ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
- * @returns {Array} ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * Àü¿ª µ¥ÀÌÅÍ °¡Á®¿À±â
+ * @returns {Array} ¿ø½Ã µ¥ÀÌÅÍ
  */
 export function getRawData() {
     return raw_data;
 }
 
 /**
- * ï¿½ï¿½ï¿½ ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+ * ¸ðµç Â÷Æ® µ¥ÀÌÅÍ Á¤¸®
  */
 export function clearAllChartData() {
     raw_data = null;
-    console.log('[ERROR_HANDLER] ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ï·ï¿½');
+    console.log('[ERROR_HANDLER] Àü¿ª µ¥ÀÌÅÍ Á¤¸® ¿Ï·á');
 }
