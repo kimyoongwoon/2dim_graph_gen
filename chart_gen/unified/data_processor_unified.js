@@ -2,7 +2,7 @@
 // chart_gen/unified/data_processor_unified.js - 독립적 데이터 변환 (최적화됨)
 // ============================================================================
 
-import { analyzeFieldTypes } from '../../../chart_data/data_validate.js';
+import { analyzeFieldTypes } from '../../chart_data/data_validate.js';
 
 /**
  * 원시 데이터를 차트용으로 변환하는 독립적 함수 (성능 최적화)

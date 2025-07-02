@@ -5,7 +5,7 @@
 import { processDataForChart } from './data_processor_unified.js';
 import { ChartWrapper } from './chart_wrapper.js';
 import { createVisualization } from '../chart_factory.js';
-import { showError_chart } from '../../../shared/error_handler.js';
+import { showError_chart } from '../../shared/error_handler.js';
 
 /**
  * 통합 차트 생성 함수
@@ -86,7 +86,7 @@ export function generateChart(rawData, config, containerElement) {
             responsive: false,
             maintainAspectRatio: false,
             resizeDelay: 0,
-            animation: { duration: 300 },
+            animation: { duration: 30 },
             ...config.options // 사용자 옵션 병합
         };
 
