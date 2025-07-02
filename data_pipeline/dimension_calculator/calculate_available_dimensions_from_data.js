@@ -136,3 +136,131 @@ export default function calculateAvailableDimensionsFromData(rawData) {
         throw new Error(`사용 가능한 차원수 계산 실패: ${error.message}`);
     }
 }
+
+/**
+ * 🆕 3D 차트 지원 가능 여부 판단
+ * @param {Array<Object>} rawData - 원시 데이터
+ * @returns {boolean} 3D 차트 지원 가능 여부
+ * @throws {Error} 데이터가 없거나 유효하지 않을 때
+ */
+export function canSupport3D(rawData) {
+    console.log('[DIMENSION_CALCULATOR] 3D 지원 가능 여부 판단 시작');
+    
+    // 입력 검증
+    if (!rawData || !Array.isArray(rawData) || rawData.length === 0) {
+        console.log('[DIMENSION_CALCULATOR] 3D 지원 불가: 유효하지 않은 데이터');
+        return false;
+    }
+
+    try {
+        const firstRecord = rawData[0];
+        if (!firstRecord || typeof firstRecord !== 'object') {
+            console.log('[DIMENSION_CALCULATOR] 3D 지원 불가: 첫 번째 레코드가 객체가 아님');
+            return false;
+        }
+
+        const fieldNames = Object.keys(firstRecord);
+        if (fieldNames.length === 0) {
+            console.log('[DIMENSION_CALCULATOR] 3D 지원 불가: 필드가 없음');
+            return false;
+        }
+
+        // 숫자(double) 필드 개수 계산
+        const sampleSize = Math.min(rawData.length, 100);
+        const numericFields = [];
+        
+        for (const fieldName of fieldNames) {
+            let numericCount = 0;
+            let validCount = 0;
+
+            for (let i = 0; i < sampleSize; i++) {
+                const record = rawData[i];
+                if (record && typeof record === 'object' && fieldName in record) {
+                    const value = record[fieldName];
+                    if (value !== null && value !== undefined && value !== '') {
+                        validCount++;
+                        if (typeof value === 'number' && !isNaN(value)) {
+                            numericCount++;
+                        }
+                    }
+                }
+            }
+
+            // 80% 이상이 숫자인 필드를 숫자 필드로 판단
+            const numericRatio = validCount > 0 ? numericCount / validCount : 0;
+            if (numericRatio >= 0.8) {
+                numericFields.push(fieldName);
+            }
+        }
+
+        const can3D = numericFields.length >= 3;
+
+        console.log('[DIMENSION_CALCULATOR] 3D 지원 가능 여부 판단 완료:', {
+            totalFields: fieldNames.length,
+            numericFields: numericFields.length,
+            numericFieldNames: numericFields,
+            canSupport3D: can3D
+        });
+
+        return can3D;
+
+    } catch (error) {
+        console.error('[DIMENSION_CALCULATOR] 3D 지원 판단 중 오류:', error);
+        return false;
+    }
+}
+
+/**
+ * 🆕 숫자 필드 목록 반환
+ * @param {Array<Object>} rawData - 원시 데이터
+ * @returns {Array<string>} 숫자 필드명 배열
+ */
+export function getNumericFields(rawData) {
+    console.log('[DIMENSION_CALCULATOR] 숫자 필드 목록 조회 시작');
+    
+    if (!rawData || !Array.isArray(rawData) || rawData.length === 0) {
+        return [];
+    }
+
+    try {
+        const firstRecord = rawData[0];
+        if (!firstRecord || typeof firstRecord !== 'object') {
+            return [];
+        }
+
+        const fieldNames = Object.keys(firstRecord);
+        const sampleSize = Math.min(rawData.length, 100);
+        const numericFields = [];
+        
+        for (const fieldName of fieldNames) {
+            let numericCount = 0;
+            let validCount = 0;
+
+            for (let i = 0; i < sampleSize; i++) {
+                const record = rawData[i];
+                if (record && typeof record === 'object' && fieldName in record) {
+                    const value = record[fieldName];
+                    if (value !== null && value !== undefined && value !== '') {
+                        validCount++;
+                        if (typeof value === 'number' && !isNaN(value)) {
+                            numericCount++;
+                        }
+                    }
+                }
+            }
+
+            // 80% 이상이 숫자인 필드를 숫자 필드로 판단
+            const numericRatio = validCount > 0 ? numericCount / validCount : 0;
+            if (numericRatio >= 0.8) {
+                numericFields.push(fieldName);
+            }
+        }
+
+        console.log('[DIMENSION_CALCULATOR] 숫자 필드:', numericFields);
+        return numericFields;
+
+    } catch (error) {
+        console.error('[DIMENSION_CALCULATOR] 숫자 필드 조회 중 오류:', error);
+        return [];
+    }
+}
