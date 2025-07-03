@@ -4,7 +4,10 @@
     <meta charset="utf-8">
     <title>고차원 데이터 시각화</title>
     <link rel="stylesheet" href="style.css">
+    <!-- ✅ Chart.js (2D 차트용) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.js"></script>
+    <!-- ✅ Plotly.js (3D 차트용) - 추가됨 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.26.0/plotly.min.js"></script>
 </head>
 <body>
     <div class="container">
@@ -31,14 +34,10 @@
             <div class="chart-config">
                 <div class="config-column">
                     <h5>차원 및 필드 선택</h5>
-                    <div class="axis-selector">
-                        <label>차원수:</label>
-                        <select id="dimensionSelect">
-                            <option value="">차원 선택</option>
-                        </select>
-                    </div>
+                    <!-- 🔧 수정: 차원선택을 숨김 (JavaScript에서 동적으로 생성) -->
+                    <!-- 기존 차원선택 드롭다운 제거 -->
                     <div class="axis-mapping" id="axisMapping">
-                        <!-- 필드 선택기들이 동적으로 생성됨 -->
+                        <!-- 2D/3D 모드 선택과 필드 선택기들이 동적으로 생성됨 -->
                     </div>
                 </div>
                 <div class="config-column">

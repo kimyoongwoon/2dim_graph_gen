@@ -1,5 +1,5 @@
 // ============================================================================
-// graph_complete.js - 차트 생성 페이지 로직 (2D/3D 통합 시스템)
+// graph_complete.js - 차트 생성 페이지 로직 (UI 순서 변경: 2D/3D 선택 → 차원 선택)
 // ============================================================================
 
 import {
@@ -13,15 +13,16 @@ import {
 
 import { showError, clearAllChartData } from './shared/error_handler.js';
 import { generateChart3D } from './3dim_chart_gen/index.js';
-import { generateChart } from './2dim_chart_gen/index.js';  // 🆕 2D 차트 생성 함수 활성화
+import { generateChart } from './2dim_chart_gen/index.js';
 
 // 전역 변수들
 let currentChartWrapper = null;
 let raw_data = null;
 let fieldTypes = {};
-let numericFields = []; // 🆕 숫자 필드 목록
-let currentDimension = null; // 🆕 현재 선택된 차원수
-let currentIs3D = false; // 🆕 현재 3D 모드 여부
+let numericFields = [];
+let currentDimension = null;
+let currentIs3D = null; // 🔧 초기값을 null로 변경
+let maxAvailableDimensions = 4; // 🆕 사용 가능한 최대 차원수
 
 // 성능 최적화: 디버깅 모드 설정
 const DEBUG_MODE = false;
@@ -50,11 +51,16 @@ function loadDataFromSessionStorage() {
         // 필드 타입 분석
         fieldTypes = dataValidator.analyzeDataFieldTypes(data);
 
-        // 🆕 숫자 필드 목록 추출
+        // 숫자 필드 목록 추출
         numericFields = dimensionCalculator.getNumericFields(data);
         console.log('[CHART] 숫자 필드:', numericFields);
 
-        initializeUI(data);
+        // 🔧 변경: 최대 차원수 계산 후 바로 2D/3D 선택 UI 표시
+        maxAvailableDimensions = dimensionCalculator.calculateAvailableDimensionsFromData(data);
+
+        // 🆕 새로운 순서: 먼저 2D/3D 모드 선택 UI 표시
+        showModeSelection();
+
         updateStepIndicator(2);
         document.getElementById('chartConfigSection').style.display = 'block';
 
@@ -63,12 +69,6 @@ function loadDataFromSessionStorage() {
         updateStatus(`데이터 로드 실패: ${error.message}. 데이터 생성기로 돌아가주세요.`, 'error');
         document.getElementById('chartConfigSection').style.display = 'none';
     }
-}
-
-function initializeUI(data) {
-    // 사용 가능한 최대 차원수 계산
-    const maxDimensions = dimensionCalculator.calculateAvailableDimensionsFromData(data);
-    updateDimensionOptions(maxDimensions);
 }
 
 // ============================================================================
@@ -95,107 +95,78 @@ function updateStepIndicator(activeStep) {
 }
 
 // ============================================================================
-// 🆕 2D/3D 통합 UI 업데이트 함수들
+// 🆕 새로운 UI 순서: 2D/3D 선택 → 차원 선택 → 필드 선택
 // ============================================================================
 
-function updateDimensionOptions(maxDimensions) {
-    const select = document.getElementById('dimensionSelect');
-    if (!select) return;
+/**
+ * 🆕 1단계: 2D/3D 모드 선택 UI 표시 (가장 먼저 표시)
+ */
 
-    select.innerHTML = '<option value="">차원 선택</option>';
+function showModeSelection() {
+    console.log('[CHART] 2D/3D 모드 선택 UI 표시');
 
-    for (let dim = 1; dim <= maxDimensions; dim++) {
-        const label = dim === 1 ? '1차원 (선형/카테고리)' :
-            dim === 2 ? '2차원 (X-Y 산점도)' :
-                dim === 3 ? '3차원 (X-Y + 크기/색상)' :
-                    '4차원 (X-Y + 크기 + 색상)';
-        select.innerHTML += `<option value="${dim}">${label}</option>`;
-    }
+    // 기존 UI 정리
+    clearAllSelectionUI();
 
-    select.onchange = onDimensionChange;
-}
-
-// 🆕 차원수 변경 핸들러
-function onDimensionChange() {
-    const dimension = parseInt(document.getElementById('dimensionSelect').value);
-    currentDimension = dimension;
-
-    if (!dimension) {
-        hide2D3DSelection();
-        hideFieldSelection();
-        hideChartTypes();
-        return;
-    }
-
-    // 2D/3D 선택 버튼 표시
-    show2D3DSelection(dimension);
-}
-
-// 🆕 2D/3D 선택 UI 표시
-function show2D3DSelection(dimension) {
-    console.log('[CHART] 2D/3D 선택 UI 표시:', dimension);
-
-    // 기존 버튼들 제거
-    const existingSelection = document.querySelector('.dimension-type-selection');
-    if (existingSelection) {
-        existingSelection.remove();
-    }
-
-    // 2D/3D 선택 컨테이너 생성
-    const selectionContainer = document.createElement('div');
-    selectionContainer.className = 'dimension-type-selection';
-    selectionContainer.style.cssText = `
+    // 2D/3D 모드 선택 컨테이너 생성
+    const modeContainer = document.createElement('div');
+    modeContainer.className = 'mode-selection-container';
+    modeContainer.style.cssText = `
         display: flex;
         gap: 15px;
         align-items: center;
         margin: 15px 0;
         padding: 15px;
-        background: #f8f9fa;
-        border: 1px solid #ddd;
+        background: #e3f2fd;
+        border: 1px solid #2196f3;
         border-radius: 4px;
     `;
 
     // 라벨
     const label = document.createElement('span');
-    label.textContent = '차트 종류 선택:';
-    label.style.cssText = 'font-weight: bold; color: #333;';
-    selectionContainer.appendChild(label);
+    label.textContent = '📊 차트 모드 선택:';
+    label.style.cssText = 'font-weight: bold; color: #333; font-size: 16px;';
+    modeContainer.appendChild(label);
 
     // 2D 버튼
     const btn2D = document.createElement('button');
     btn2D.textContent = '2D 차트 (Chart.js)';
-    btn2D.className = 'chart-type-btn btn-2d';
+    btn2D.className = 'mode-btn btn-2d';
     btn2D.style.cssText = `
-        padding: 8px 16px;
+        padding: 10px 20px;
         background: #007bff;
         color: white;
         border: none;
         border-radius: 4px;
         cursor: pointer;
         font-size: 14px;
+        font-weight: bold;
+        transition: background-color 0.2s;
     `;
-    btn2D.onclick = () => select2D3D(false);
+    btn2D.onclick = () => selectMode(false);
 
     // 3D 버튼
     const btn3D = document.createElement('button');
     btn3D.textContent = '3D 차트 (Plotly)';
-    btn3D.className = 'chart-type-btn btn-3d';
+    btn3D.className = 'mode-btn btn-3d';
     btn3D.style.cssText = `
-        padding: 8px 16px;
+        padding: 10px 20px;
         background: #28a745;
         color: white;
         border: none;
         border-radius: 4px;
         cursor: pointer;
         font-size: 14px;
+        font-weight: bold;
+        transition: background-color 0.2s;
     `;
 
-    // 🔥 3D 지원 가능 여부 확인
+    // 3D 지원 가능 여부 확인
     const canSupport3D = dimensionCalculator.canSupport3D(raw_data);
     console.log('[CHART] 3D 지원 가능:', canSupport3D, '숫자 필드:', numericFields.length);
 
     if (canSupport3D && numericFields.length >= 3) {
-        btn3D.onclick = () => select2D3D(true);
+        btn3D.onclick = () => selectMode(true);
     } else {
         // 3D 비활성화
         btn3D.disabled = true;
@@ -204,23 +175,25 @@ function show2D3DSelection(dimension) {
         btn3D.title = `3D 차트를 위해서는 숫자 필드가 3개 이상 필요합니다 (현재: ${numericFields.length}개)`;
     }
 
-    selectionContainer.appendChild(btn2D);
-    selectionContainer.appendChild(btn3D);
+    modeContainer.appendChild(btn2D);
+    modeContainer.appendChild(btn3D);
 
-    // 차원 선택기 다음에 삽입
-    const dimensionSelect = document.getElementById('dimensionSelect').closest('.axis-selector');
-    dimensionSelect.parentNode.insertBefore(selectionContainer, dimensionSelect.nextSibling);
+    // axisMapping 컨테이너 앞에 삽입
+    const axisMapping = document.getElementById('axisMapping');
+    axisMapping.parentNode.insertBefore(modeContainer, axisMapping);
 
-    console.log('[CHART] 2D/3D 선택 UI 생성 완료');
+    console.log('[CHART] 2D/3D 모드 선택 UI 생성 완료');
 }
 
-// 🆕 2D/3D 선택 핸들러
-function select2D3D(is3D) {
-    console.log('[CHART] 2D/3D 선택:', is3D ? '3D' : '2D');
+/**
+ * 🆕 2단계: 2D/3D 모드 선택 핸들러
+ */
+function selectMode(is3D) {
+    console.log('[CHART] 모드 선택:', is3D ? '3D' : '2D');
     currentIs3D = is3D;
 
     // 버튼 스타일 업데이트
-    document.querySelectorAll('.chart-type-btn').forEach(btn => {
+    document.querySelectorAll('.mode-btn').forEach(btn => {
         btn.style.background = '#6c757d';
     });
 
@@ -229,19 +202,182 @@ function select2D3D(is3D) {
         activeBtn.style.background = is3D ? '#28a745' : '#007bff';
     }
 
+    // 차원/필드 선택 UI 업데이트
+    if (is3D) {
+        // 3D 모드: 차원을 3으로 고정하고 바로 필드 선택
+        currentDimension = 3;
+        hide2DSpecificUI();
+        show3DModeInfo();
+        updateFieldSelection();
+    } else {
+        // 2D 모드: 차원 선택 UI 표시
+        hide3DSpecificUI();
+        showDimensionSelection();
+    }
+}
+
+/**
+ * 🆕 3단계: 2D 모드에서만 차원 선택 UI 표시
+ */
+function showDimensionSelection() {
+    console.log('[CHART] 2D 차원 선택 UI 표시');
+
+    // 기존 차원 선택 UI 제거
+    const existingDimSelector = document.querySelector('.dimension-selection-container');
+    if (existingDimSelector) {
+        existingDimSelector.remove();
+    }
+
+    // 차원 선택 컨테이너 생성
+    const dimContainer = document.createElement('div');
+    dimContainer.className = 'dimension-selection-container';
+    dimContainer.style.cssText = `
+        display: flex;
+        gap: 15px;
+        align-items: center;
+        margin: 15px 0;
+        padding: 15px;
+        background: #fff3cd;
+        border: 1px solid #ffeaa7;
+        border-radius: 4px;
+    `;
+
+    // 라벨
+    const label = document.createElement('span');
+    label.textContent = '📐 차원수 선택:';
+    label.style.cssText = 'font-weight: bold; color: #333; font-size: 14px;';
+    dimContainer.appendChild(label);
+
+    // 차원 선택 드롭다운
+    const select = document.createElement('select');
+    select.id = 'dimensionSelect';
+    select.style.cssText = `
+        padding: 8px 12px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 14px;
+        min-width: 200px;
+    `;
+
+    select.innerHTML = '<option value="">차원 선택</option>';
+    for (let dim = 1; dim <= maxAvailableDimensions; dim++) {
+        const label = dim === 1 ? '1차원 (선형/카테고리)' :
+            dim === 2 ? '2차원 (X-Y 산점도)' :
+                dim === 3 ? '3차원 (X-Y + 크기/색상)' :
+                    '4차원 (X-Y + 크기 + 색상)';
+        select.innerHTML += `<option value="${dim}">${label}</option>`;
+    }
+
+    select.onchange = onDimensionChange;
+    dimContainer.appendChild(select);
+
+    // 모드 선택 컨테이너 다음에 삽입
+    const modeContainer = document.querySelector('.mode-selection-container');
+    modeContainer.parentNode.insertBefore(dimContainer, modeContainer.nextSibling);
+
+    console.log('[CHART] 2D 차원 선택 UI 생성 완료');
+}
+
+/**
+ * 🆕 4단계: 차원수 변경 핸들러 (2D 모드에서만 호출)
+ */
+function onDimensionChange() {
+    const dimension = parseInt(document.getElementById('dimensionSelect').value);
+    currentDimension = dimension;
+
+    if (!dimension) {
+        hideFieldSelection();
+        hideChartTypes();
+        return;
+    }
+
+    console.log('[CHART] 2D 차원 선택:', dimension);
+
+    // 2D 차트 타입 표시
+    show2DChartTypeUI();
+
     // 필드 선택 UI 표시
     updateFieldSelection();
 }
 
-// 🆕 2D/3D 선택 숨김
-function hide2D3DSelection() {
-    const existingSelection = document.querySelector('.dimension-type-selection');
-    if (existingSelection) {
-        existingSelection.remove();
+/**
+ * 🆕 2D 차트 타입 및 옵션 UI 표시
+ */
+function show2DChartTypeUI() {
+    const chartTypeSection = document.querySelector('.config-column:nth-child(2)');
+    if (!chartTypeSection) return;
+
+    // 차트 타입 선택 표시
+    const chartTypeSelector = chartTypeSection.querySelector('#chartTypeSelect').closest('.axis-selector');
+    if (chartTypeSelector) {
+        chartTypeSelector.style.display = 'flex';
+    }
+
+    // 고급 옵션 표시
+    const advancedOptions = chartTypeSection.querySelector('.advanced-options');
+    if (advancedOptions) {
+        advancedOptions.style.display = 'block';
+    }
+
+    // 3D 안내 메시지 제거
+    const infoDiv = chartTypeSection.querySelector('.mode-info');
+    if (infoDiv) {
+        infoDiv.remove();
+    }
+
+    // 2D 차트 타입 업데이트
+    if (currentDimension) {
+        const chart2DTypes = get2DChartTypes(currentDimension);
+        updateChartTypes(chart2DTypes);
     }
 }
 
-// 🆕 수정된 필드 선택 업데이트
+/**
+ * 🆕 3D 모드 안내 정보 표시
+ */
+function show3DModeInfo() {
+    const chartTypeSection = document.querySelector('.config-column:nth-child(2)');
+    if (!chartTypeSection) return;
+
+    // 차트 타입 선택 숨김
+    const chartTypeSelector = chartTypeSection.querySelector('#chartTypeSelect').closest('.axis-selector');
+    if (chartTypeSelector) {
+        chartTypeSelector.style.display = 'none';
+    }
+
+    // 고급 옵션 숨김
+    const advancedOptions = chartTypeSection.querySelector('.advanced-options');
+    if (advancedOptions) {
+        advancedOptions.style.display = 'none';
+    }
+
+    // 3D 모드 안내 메시지 추가
+    let infoDiv = chartTypeSection.querySelector('.mode-info');
+    if (!infoDiv) {
+        infoDiv = document.createElement('div');
+        infoDiv.className = 'mode-info';
+        infoDiv.style.cssText = `
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border: 1px solid #c3e6cb;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-size: 14px;
+        `;
+        chartTypeSelector.parentNode.insertBefore(infoDiv, chartTypeSelector);
+    }
+    infoDiv.innerHTML = `
+        <strong>🌐 3D 모드 (Plotly)</strong><br>
+        • 차원: 3차원 고정 (X, Y, Z축)<br>
+        • 차트 타입: Surface + Scatter 자동 설정<br>
+        • 모든 축은 숫자 필드만 사용 가능
+    `;
+}
+
+/**
+ * 🔧 수정된 필드 선택 업데이트
+ */
 function updateFieldSelection() {
     if (currentDimension === null || currentIs3D === null) {
         hideFieldSelection();
@@ -252,15 +388,26 @@ function updateFieldSelection() {
     const container = document.getElementById('axisMapping');
     container.innerHTML = '';
 
+    // 필드 개수 결정
+    const fieldCount = currentIs3D ? 3 : currentDimension; // 3D는 항상 3개, 2D는 선택한 차원
+
     // 필드 선택기 생성
     const fragment = document.createDocumentFragment();
 
-    for (let i = 0; i < currentDimension; i++) {
+    for (let i = 0; i < fieldCount; i++) {
         const div = document.createElement('div');
         div.className = 'axis-selector';
 
         const label = document.createElement('label');
-        label.innerHTML = `필드 ${i + 1}:<br><small>${dataValidator.getFieldDescription(i, currentDimension)}</small>`;
+
+        if (currentIs3D) {
+            // 3D는 X, Y, Z 고정
+            const axisNames = ['X축 (숫자만)', 'Y축 (숫자만)', 'Z축 (숫자만)'];
+            label.innerHTML = `${axisNames[i]}:<br><small>3D 공간 좌표</small>`;
+        } else {
+            // 2D는 기존 방식
+            label.innerHTML = `필드 ${i + 1}:<br><small>${dataValidator.getFieldDescription(i, currentDimension)}</small>`;
+        }
 
         const select = document.createElement('select');
         select.id = `field${i}`;
@@ -277,45 +424,52 @@ function updateFieldSelection() {
 
     updateAllFieldOptions();
 
-    // 호환 가능한 차트 타입 가져오기
-    try {
-        if (currentIs3D) {
-            // 3D 차트 타입
-            const chartTypes = chartTypeProvider.getCompatibleChartTypesForData(raw_data, currentDimension);
-            updateChartTypes(chartTypes);
-        } else {
-            // 2D 차트 타입 (임시로 기본 타입들 사용)
-            const chart2DTypes = get2DChartTypes(currentDimension);
-            updateChartTypes(chart2DTypes);
+    // 3D 모드에서 차트 타입 자동 설정
+    if (currentIs3D) {
+        const chart3DTypes = get3DChartTypes(3); // 3D는 항상 3차원
+        if (chart3DTypes.length > 0) {
+            const defaultType = chart3DTypes[0];
+            const chartTypeSelect = document.getElementById('chartTypeSelect');
+            if (chartTypeSelect) {
+                chartTypeSelect.innerHTML = `<option value="${defaultType.value}" selected>${defaultType.label}</option>`;
+                console.log('[CHART] 3D 모드: 기본 차트 타입 설정 -', defaultType.value);
+            }
         }
-    } catch (error) {
-        console.error('[CHART] 차트 타입 조회 오류:', error);
-        updateChartTypes([]);
+    }
+
+    checkFormComplete();
+}
+
+// ============================================================================
+// UI 정리 함수들
+// ============================================================================
+
+function clearAllSelectionUI() {
+    // 모든 선택 UI 제거
+    const containers = [
+        '.mode-selection-container',
+        '.dimension-selection-container',
+        '.dimension-type-selection'
+    ];
+
+    containers.forEach(selector => {
+        const element = document.querySelector(selector);
+        if (element) element.remove();
+    });
+}
+
+function hide2DSpecificUI() {
+    const dimContainer = document.querySelector('.dimension-selection-container');
+    if (dimContainer) {
+        dimContainer.style.display = 'none';
     }
 }
 
-// 🆕 2D 차트 타입 목록 (임시)
-function get2DChartTypes(dimension) {
-    const chart2DTypes = {
-        1: [
-            { value: 'line', label: 'Line Chart', description: '선형 차트' },
-            { value: 'bar', label: 'Bar Chart', description: '막대 차트' }
-        ],
-        2: [
-            { value: 'scatter', label: 'Scatter Plot', description: 'X-Y 산점도' },
-            { value: 'line2d', label: 'Line Chart', description: 'X-Y 선형 차트' },
-            { value: 'bar2d', label: 'Bar Chart', description: 'X-Y 막대 차트' }
-        ],
-        3: [
-            { value: 'bubble', label: 'Bubble Chart', description: '버블 차트 (크기 인코딩)' },
-            { value: 'scatter_size', label: 'Scatter + Size', description: '산점도 + 크기' }
-        ],
-        4: [
-            { value: 'bubble_color', label: 'Bubble + Color', description: '버블 + 색상 차트' }
-        ]
-    };
-
-    return chart2DTypes[dimension] || [];
+function hide3DSpecificUI() {
+    const infoDiv = document.querySelector('.mode-info');
+    if (infoDiv) {
+        infoDiv.remove();
+    }
 }
 
 function hideFieldSelection() {
@@ -327,6 +481,59 @@ function hideFieldSelection() {
 
 function hideChartTypes() {
     updateChartTypes([]);
+}
+
+// ============================================================================
+// 기존 함수들 (수정된 부분)
+// ============================================================================
+
+/**
+ * 2D 차트 타입 목록
+ */
+function get2DChartTypes(dimension) {
+    const chart2DTypes = {
+        1: [
+            { value: 'line1d', label: 'Line Chart', description: '1D 선형 차트 (숫자 데이터)' },
+            { value: 'category', label: 'Category Chart', description: '카테고리 막대 차트 (문자열 데이터)' }
+        ],
+        2: [
+            { value: 'scatter', label: 'Scatter Plot', description: 'X-Y 산점도' },
+            { value: 'size', label: 'Size Chart', description: '크기 인코딩' },
+            { value: 'color', label: 'Color Chart', description: '색상 인코딩' },
+            { value: 'bar', label: 'Bar Chart', description: '막대 차트' },
+            { value: 'bar_size', label: 'Bar Size Chart', description: '막대 크기 차트' },
+            { value: 'bar_color', label: 'Bar Color Chart', description: '막대 색상 차트' }
+        ],
+        3: [
+            { value: 'scatter_size', label: 'Scatter + Size', description: '산점도 + 크기' },
+            { value: 'scatter_color', label: 'Scatter + Color', description: '산점도 + 색상' },
+            { value: 'size_color', label: 'Size + Color', description: '크기 + 색상' },
+            { value: 'grouped_bar', label: 'Grouped Bar', description: '그룹 막대' },
+            { value: 'grouped_bar_size', label: 'Grouped Bar + Size', description: '그룹 막대 + 크기' },
+            { value: 'grouped_bar_color', label: 'Grouped Bar + Color', description: '그룹 막대 + 색상' }
+        ],
+        4: [
+            { value: 'scatter_size_color', label: 'Scatter + Size + Color', description: '산점도 + 크기 + 색상' },
+            { value: 'grouped_scatter_size_color', label: 'Grouped Scatter + Size + Color', description: '그룹 산점도 + 크기 + 색상' }
+        ]
+    };
+
+    return chart2DTypes[dimension] || [];
+}
+
+/**
+ * 3D 차트 타입 목록
+ */
+function get3DChartTypes(dimension) {
+    const chart3DTypes = {
+        3: [
+            { value: '3d_surface_scatter', label: '3D Surface + Scatter', description: 'Surface와 Scatter 조합' },
+            { value: '3d_surface_only', label: '3D Surface', description: 'Surface만' },
+            { value: '3d_scatter_only', label: '3D Scatter', description: 'Scatter만' }
+        ]
+    };
+
+    return chart3DTypes[dimension] || chart3DTypes[3];
 }
 
 function updateChartTypes(types) {
@@ -346,13 +553,14 @@ function updateChartTypes(types) {
 }
 
 function updateAllFieldOptions() {
-    if (currentDimension === null) return;
+    const fieldCount = currentIs3D ? 3 : currentDimension;
+    if (fieldCount === null) return;
 
-    // 🆕 3D 모드에서는 숫자 필드만 사용 가능
+    // 3D 모드에서는 숫자 필드만 사용 가능
     const availableFields = currentIs3D ? numericFields : Object.keys(fieldTypes);
     const selectedFields = [];
 
-    for (let i = 0; i < currentDimension; i++) {
+    for (let i = 0; i < fieldCount; i++) {
         const fieldSelect = document.getElementById(`field${i}`);
         if (fieldSelect && fieldSelect.value) {
             selectedFields.push(fieldSelect.value);
@@ -362,7 +570,7 @@ function updateAllFieldOptions() {
     // 배치 업데이트로 리플로우 최소화
     const updates = [];
 
-    for (let i = 0; i < currentDimension; i++) {
+    for (let i = 0; i < fieldCount; i++) {
         const fieldSelect = document.getElementById(`field${i}`);
         if (!fieldSelect) continue;
 
@@ -403,11 +611,23 @@ function updateAllFieldOptions() {
 
 function checkFormComplete() {
     const dimension = currentDimension;
-    const chartType = document.getElementById('chartTypeSelect').value;
+    const is3D = currentIs3D;
+    let chartType;
 
+    // 차트 타입 처리
+    if (is3D) {
+        // 3D 모드: 자동으로 설정되므로 항상 유효
+        const chart3DTypes = get3DChartTypes(3);
+        chartType = chart3DTypes.length > 0 ? chart3DTypes[0].value : null;
+    } else {
+        // 2D 모드: 사용자 선택 확인
+        chartType = document.getElementById('chartTypeSelect')?.value;
+    }
+
+    const fieldCount = is3D ? 3 : dimension;
     const selectedFields = [];
-    if (dimension) {
-        for (let i = 0; i < dimension; i++) {
+    if (fieldCount) {
+        for (let i = 0; i < fieldCount; i++) {
             const fieldElement = document.getElementById(`field${i}`);
             if (fieldElement && fieldElement.value) {
                 selectedFields.push(fieldElement.value);
@@ -419,7 +639,7 @@ function checkFormComplete() {
     let isComplete = false;
     try {
         isComplete = dataValidator.validateFormCompleteness({
-            dimension,
+            dimension: fieldCount, // 3D는 3, 2D는 선택한 차원
             chartType,
             selectedFields
         });
@@ -440,17 +660,19 @@ function displayChartInfo(chartType, selectedFields, dataCount) {
 
     const fieldsInfo = selectedFields.join(' → ');
     const modeInfo = currentIs3D ? '3D (Plotly)' : '2D (Chart.js)';
+    const dimensionInfo = currentIs3D ? '3D' : `${currentDimension}D`;
+
     info.innerHTML = `
         <strong>모드:</strong> ${modeInfo} | 
         <strong>차트 타입:</strong> ${chartType} | 
-        <strong>차원:</strong> ${selectedFields.length}D | 
+        <strong>차원:</strong> ${dimensionInfo} | 
         <strong>선택된 필드:</strong> ${fieldsInfo}<br>
         <strong>데이터 개수:</strong> ${dataCount}개
     `;
 }
 
 // ============================================================================
-// 🆕 2D/3D 통합 차트 생성 함수
+// 🆕 2D/3D 통합 차트 생성 함수 (수정된 부분)
 // ============================================================================
 
 window.createVisualization = async function () {
@@ -461,13 +683,35 @@ window.createVisualization = async function () {
         return;
     }
 
-    const dimension = currentDimension;
-    const chartType = document.getElementById('chartTypeSelect').value;
     const is3D = currentIs3D;
+    const dimension = is3D ? 3 : currentDimension; // 3D는 항상 3차원
+    let chartType;
+
+    // 차트 타입 처리
+    if (is3D) {
+        // 3D 모드: 자동으로 차트 타입 설정
+        const chart3DTypes = get3DChartTypes(3);
+        if (chart3DTypes.length === 0) {
+            showError('3D 차트 타입을 찾을 수 없습니다');
+            return;
+        }
+
+        chartType = chart3DTypes[0].value;
+        console.log('[CHART] 3D 모드: 자동 차트 타입 -', chartType);
+
+    } else {
+        // 2D 모드: 사용자 선택 차트 타입 사용
+        chartType = document.getElementById('chartTypeSelect').value;
+        if (!chartType) {
+            showError('차트 타입을 선택해주세요');
+            return;
+        }
+    }
 
     // 선택된 필드들 수집
+    const fieldCount = is3D ? 3 : dimension;
     const selectedFields = [];
-    for (let i = 0; i < dimension; i++) {
+    for (let i = 0; i < fieldCount; i++) {
         const fieldElement = document.getElementById(`field${i}`);
         const fieldValue = fieldElement?.value;
 
@@ -490,9 +734,9 @@ window.createVisualization = async function () {
     try {
         updateStatus('시각화 생성 중...', 'info');
 
-        // 🆕 통합 사용자 입력 검증
+        // 🔧 수정된 검증: is3D 정보 포함
         const validationResult = dataValidator.validateUserSelectionInput(
-            { dimension, chartType, selectedFields },
+            { dimension, chartType, selectedFields, is3D }, // ✅ is3D 추가
             raw_data
         );
 
@@ -506,7 +750,7 @@ window.createVisualization = async function () {
             console.warn('[CHART] 검증 경고:', validationResult.warnings);
         }
 
-        // 🆕 2D/3D 분기 차트 config 생성
+        // 2D/3D 분기 차트 config 생성
         let config;
         if (is3D) {
             // 3D 차트 config 생성
@@ -514,17 +758,16 @@ window.createVisualization = async function () {
                 chartType,
                 selectedFields,
                 dimension,
-                {}, // extraOptions
+                {},
                 true // is3D = true
             );
         } else {
-            // 2D 차트 config 생성 (기존 방식)
+            // 2D 차트 config 생성
             config = configBuilder.buildChartConfigForGeneration(
                 chartType,
                 selectedFields,
                 dimension,
-                {} // extraOptions
-                // is3D 기본값 = false
+                {}
             );
         }
 
@@ -558,18 +801,18 @@ window.createVisualization = async function () {
                 return;
             }
 
-            // 🆕 통합 컨테이너 생성
+            // 통합 컨테이너 생성
             setTimeout(() => {
                 try {
                     console.time('실제차트생성');
 
-                    // 🆕 2D/3D 분기 컨테이너 생성
+                    // 2D/3D 분기 컨테이너 생성
                     let containerElement;
                     if (is3D) {
                         // 3D Plotly 컨테이너 생성
                         containerElement = containerCreator.createUnifiedChartContainer(
                             canvasWrapper,
-                            true, // is3D = true
+                            true,
                             {
                                 width: '100%',
                                 height: '100%',
@@ -580,7 +823,7 @@ window.createVisualization = async function () {
                         // 2D Canvas 컨테이너 생성
                         containerElement = containerCreator.createUnifiedChartContainer(
                             canvasWrapper,
-                            false, // is3D = false
+                            false,
                             {
                                 width: '100%',
                                 height: '100%',
@@ -589,7 +832,7 @@ window.createVisualization = async function () {
                         );
                     }
 
-                    // 🆕 2D/3D 분기 차트 생성
+                    // 2D/3D 분기 차트 생성
                     if (is3D) {
                         // 3D 차트 생성
                         currentChartWrapper = generateChart3D(raw_data, config, containerElement);
@@ -641,7 +884,7 @@ window.goBackToGenerator = function () {
     fieldTypes = {};
     numericFields = [];
     currentDimension = null;
-    currentIs3D = false;
+    currentIs3D = null;
 
     window.location.href = 'index.html';
 };
