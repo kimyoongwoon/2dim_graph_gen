@@ -1,15 +1,24 @@
 // ============================================================================
-// 3dim_chart_gen/unified/index.js - 통합 시스템 export
+// 3dim_chart_gen/unified/index.js - 통합 시스템 export (2D/3D/4D)
 // ============================================================================
 
-// 메인 3D 차트 생성기
-export { generateChart3D, generateMultiple3DCharts } from './chart_generator_3d.js';
+// 메인 차트 생성기 (3D → 통합으로 확장)
+export { generateChart, generateMultipleCharts } from './chart_generator.js';
 
-// 3D 차트 래퍼
-export { ChartWrapper3D } from './chart_wrapper_3d.js';
+// 차트 래퍼 (3D → 통합으로 확장)
+export { ChartWrapper } from './chart_wrapper.js';
 
-// 3D 데이터 처리
-export { processDataForChart3D, validate3DData } from './data_processor_3d.js';
+// 데이터 처리 (3D → 통합으로 확장)
+export { processDataForChart, createTooltipData } from './data_processor.js';
 
-// 3D 리사이즈 관리
-export { ResizeManager3D, resizeAllPlotlyCharts, setPlotlyResponsive } from './resize_manager_3d.js';
+// ============================================================================
+// 하위 호환성을 위한 3D aliases
+// ============================================================================
+
+/**
+ * 하위 호환성을 위한 3D 함수 aliases
+ * @deprecated 새로운 통합 함수 사용을 권장합니다
+ */
+export { generateChart as generateChart3D } from './chart_generator.js';
+export { ChartWrapper as ChartWrapper3D } from './chart_wrapper.js';
+export { processDataForChart as processDataForChart3D } from './data_processor.js';

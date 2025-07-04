@@ -1,25 +1,31 @@
 // ============================================================================
-// 3dim_chart_gen/index.js - 3D 차트 시스템 메인 export (2D와 동일한 패턴)
+// 3dim_chart_gen/index.js - 통합 차트 시스템 메인 export (2D/3D/4D 지원)
 // ============================================================================
 
-// 메인 3D 차트 생성 함수 (generateChart3D)
-export { generateChart3D, generateMultiple3DCharts } from './unified/index.js';
+// 메인 차트 생성 함수 (generateChart3D → generateChart로 변경)
+export { generateChart, generateMultipleCharts } from './unified/chart_generator.js';
 
-// 3D 차트 팩토리
-export { createVisualization3D, isValid3DChartType, getSupportedChart3DTypes } from './chart_factory_3d.js';
+// 차트 팩토리 (3D → 통합으로 확장)
+export { createVisualization, getSupportedChartTypes } from './chart_factory.js';
 
-// 3D 차트 래퍼와 관리자들
-export { ChartWrapper3D } from './unified/chart_wrapper_3d.js';
-export { ResizeManager3D, resizeAllPlotlyCharts, setPlotlyResponsive } from './unified/resize_manager_3d.js';
+// 차트 래퍼 (3D → 통합으로 확장)
+export { ChartWrapper } from './unified/chart_wrapper.js';
 
-// 3D 데이터 처리
-export { processDataForChart3D, validate3DData } from './unified/data_processor_3d.js';
+// 데이터 처리 (3D → 통합으로 확장)
+export { processDataForChart, createTooltipData } from './unified/data_processor.js';
 
-// 3D UI 컴포넌트들
-export * from './components/index.js';
-
-// 3D 유틸리티 함수들
+// 유틸리티 함수들 (스케일링 + UI 컨트롤 통합)
 export * from './utils/index.js';
 
-// 3D 차트 렌더링 함수들
-export * from './charts/3dim/index.js';
+// 차트 렌더링 함수들 (모든 차원 지원)
+export * from './charts/index.js';
+
+// ============================================================================
+// 하위 호환성을 위한 alias (기존 3D API 유지)
+// ============================================================================
+
+/**
+ * 하위 호환성을 위한 generateChart3D alias
+ * @deprecated generateChart 사용을 권장합니다
+ */
+export { generateChart as generateChart3D } from './unified/chart_generator.js';

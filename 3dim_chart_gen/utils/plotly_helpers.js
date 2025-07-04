@@ -1,161 +1,140 @@
-// ============================================================================
-// 3dim_chart_gen/utils/plotly_helpers.js - Plotly 유틸리티 함수들
-// ============================================================================
-
 /**
- * 3D 표면 차트용 그리드 데이터 생성
+ * 🔥 통합 Plotly trace 생성 (2D/3D/4D + 스케일링 지원)
  * @param {Array} data - 처리된 데이터 포인트들
- * @param {string} xField - X축 필드명
- * @param {string} yField - Y축 필드명  
- * @param {string} zField - Z축 필드명
- * @returns {Object} { x_grid, y_grid, z_grid }
+ * @param {Object} config - 차트 설정 {dimension, axes, scalingConfig, colorConfig}
+ * @param {number} dimension - 차원 (2, 3, 4)
+ * @returns {Object} Plotly trace 객체
  */
-export function createSurfaceGrid(data, xField, yField, zField) {
-    console.log('[PLOTLY_HELPERS] 표면 그리드 생성:', { xField, yField, zField });
+export function createPlotlyTrace(data, config, dimension) {
+    console.log('[PLOTLY_HELPERS] 통합 Plotly trace 생성:', { dimension, dataPoints: data.length });
     
     if (!data || data.length === 0) {
-        return { x_grid: [], y_grid: [], z_grid: [] };
+        console.warn('[PLOTLY_HELPERS] 빈 데이터로 기본 trace 생성');
+        return createEmptyTrace(dimension);
     }
-
-    // 고유한 X, Y 값들 추출 및 정렬
-    const xValues = [...new Set(data.map(d => d[xField]))].sort((a, b) => a - b);
-    const yValues = [...new Set(data.map(d => d[yField]))].sort((a, b) => a - b);
     
-    console.log('[PLOTLY_HELPERS] 그리드 크기:', xValues.length, 'x', yValues.length);
-
-    // 포인트 맵 생성 (빠른 조회용)
-    const pointMap = new Map();
-    data.forEach(d => {
-        const key = `${d[xField]}_${d[yField]}`;
-        pointMap.set(key, d[zField]);
-    });
-
-    // 2D 그리드 생성
-    const x_grid = [];
-    const y_grid = [];
-    const z_grid = [];
-
-    for (let yi = 0; yi < yValues.length; yi++) {
-        const x_row = [];
-        const y_row = [];
-        const z_row = [];
-
-        for (let xi = 0; xi < xValues.length; xi++) {
-            const x = xValues[xi];
-            const y = yValues[yi];
-            const key = `${x}_${y}`;
+    // 기본 trace 구조
+    const trace = {
+        mode: 'markers',
+        marker: {
+            size: 8,  // 기본 크기
+            color: 'rgba(99, 110, 250, 0.7)',  // 기본 색상
+            line: { width: 1, color: 'rgba(99, 110, 250, 1)' }
+        },
+        hovertemplate: '%{text}<extra></extra>'
+    };
+    
+    // 차원별 처리
+    switch (dimension) {
+        case 2:
+            trace.type = 'scatter';
+            trace.x = data.map(d => d[config.axes[0].name]);
+            trace.y = data.map(d => d[config.axes[1] ? config.axes[1].name : 0]); // Y축이 없으면 0
+            break;
             
-            x_row.push(x);
-            y_row.push(y);
-            z_row.push(pointMap.get(key) || null);
-        }
-
-        x_grid.push(x_row);
-        y_grid.push(y_row);
-        z_grid.push(z_row);
-    }
-
-    return { x_grid, y_grid, z_grid };
-}
-
-/**
- * 3D 산점도용 좌표 배열 생성
- * @param {Array} data - 처리된 데이터 포인트들
- * @param {string} xField - X축 필드명
- * @param {string} yField - Y축 필드명
- * @param {string} zField - Z축 필드명
- * @returns {Object} { x_scatter, y_scatter, z_scatter }
- */
-export function createScatterArrays(data, xField, yField, zField) {
-    console.log('[PLOTLY_HELPERS] 산점도 배열 생성:', { xField, yField, zField });
-    
-    if (!data || data.length === 0) {
-        return { x_scatter: [], y_scatter: [], z_scatter: [] };
-    }
-
-    const x_scatter = [];
-    const y_scatter = [];
-    const z_scatter = [];
-
-    data.forEach(d => {
-        const x = d[xField];
-        const y = d[yField];
-        const z = d[zField];
-        
-        // 유효한 값만 추가
-        if (x !== null && x !== undefined && 
-            y !== null && y !== undefined && 
-            z !== null && z !== undefined) {
-            x_scatter.push(x);
-            y_scatter.push(y);
-            z_scatter.push(z);
-        }
-    });
-
-    console.log('[PLOTLY_HELPERS] 산점도 포인트 수:', x_scatter.length);
-    return { x_scatter, y_scatter, z_scatter };
-}
-
-/**
- * Plotly 레이아웃 기본 설정 생성
- * @param {string} title - 차트 제목
- * @param {string} xAxisTitle - X축 제목
- * @param {string} yAxisTitle - Y축 제목
- * @param {string} zAxisTitle - Z축 제목
- * @returns {Object} Plotly 레이아웃 객체
- */
-export function createPlotlyLayout(title, xAxisTitle, yAxisTitle, zAxisTitle) {
-    return {
-        title: {
-            text: title,
-            font: { family: 'Arial, sans-serif', size: 20, color: '#000' },
-            xref: 'paper',
-            x: 0.5,
-            xanchor: 'center'
-        },
-        margin: { t: 60, l: 0, r: 0, b: 0 },
-        scene: {
-            xaxis: { 
-                title: { text: xAxisTitle },
-                showgrid: true,
-                zeroline: false
-            },
-            yaxis: { 
-                title: { text: yAxisTitle },
-                showgrid: true,
-                zeroline: false
-            },
-            zaxis: { 
-                title: { text: zAxisTitle },
-                showgrid: true,
-                zeroline: false
-            },
-            camera: {
-                eye: { x: 1.5, y: 1.5, z: 1.5 }
+        case 3:
+            if (config.is3DSurface) {
+                // 실제 3D 표면 차트 (기존 로직 유지)
+                trace.type = 'scatter3d';
+                trace.x = data.map(d => d[config.axes[0].name]);
+                trace.y = data.map(d => d[config.axes[1].name]);
+                trace.z = data.map(d => d[config.axes[2].name]);
+            } else {
+                // 2D + 시각적 인코딩
+                trace.type = 'scatter';
+                trace.x = data.map(d => d[config.axes[0].name]);
+                trace.y = data.map(d => d[config.axes[1] ? config.axes[1].name : 0]);
             }
-        },
-        showlegend: true
-    };
+            break;
+            
+        case 4:
+            // 4D는 항상 2D + 이중 인코딩
+            trace.type = 'scatter';
+            trace.x = data.map(d => d[config.axes[0].name]);
+            trace.y = data.map(d => d[config.axes[1].name]);
+            break;
+            
+        default:
+            throw new Error(`지원하지 않는 차원: ${dimension}`);
+    }
+    
+    // 🔥 스케일링 적용
+    trace = applyScalingToTrace(trace, data, config);
+    
+    console.log('[PLOTLY_HELPERS] Plotly trace 생성 완료');
+    return trace;
 }
 
 /**
- * Plotly 설정 옵션 생성
- * @returns {Object} Plotly 설정 객체
+ * 🔥 Plotly trace에 스케일링 적용
+ * @param {Object} trace - Plotly trace 객체
+ * @param {Array} data - 데이터
+ * @param {Object} config - 설정
+ * @returns {Object} 스케일링이 적용된 trace
  */
-export function createPlotlyConfig() {
-    return {
-        responsive: true,
-        displayModeBar: true,
-        modeBarButtonsToRemove: ['pan2d', 'lasso2d'],
-        displaylogo: false,
-        toImageButtonOptions: {
-            format: 'png',
-            filename: '3d_chart',
-            height: 600,
-            width: 800,
-            scale: 1
+function applyScalingToTrace(trace, data, config) {
+    console.log('[PLOTLY_HELPERS] trace에 스케일링 적용');
+    
+    // 크기 스케일링 적용
+    if (config.sizeField && config.scalingConfig) {
+        try {
+            import('../scaling/size_scaling.js').then(({ applySizeScaling }) => {
+                const scaledSizes = applySizeScaling(data, config.sizeField, config.scalingConfig);
+                trace.marker.size = scaledSizes;
+                console.log('[PLOTLY_HELPERS] 크기 스케일링 적용 완료');
+            });
+        } catch (error) {
+            console.warn('[PLOTLY_HELPERS] 크기 스케일링 적용 실패:', error);
         }
+    }
+    
+    // 색상 스케일링 적용
+    if (config.colorField && config.colorConfig) {
+        try {
+            import('../scaling/color_scaling.js').then(({ applyColorScaling, createPlotlyColorConfig }) => {
+                const { normalizedColors, colorConfig } = applyColorScaling(data, config.colorField, config.colorConfig);
+                const plotlyColorConfig = createPlotlyColorConfig(normalizedColors, colorConfig);
+                
+                // trace.marker에 색상 설정 적용
+                Object.assign(trace.marker, plotlyColorConfig);
+                console.log('[PLOTLY_HELPERS] 색상 스케일링 적용 완료');
+            });
+        } catch (error) {
+            console.warn('[PLOTLY_HELPERS] 색상 스케일링 적용 실패:', error);
+        }
+    }
+    
+    return trace;
+}
+
+/**
+ * 빈 데이터용 기본 trace 생성
+ * @param {number} dimension - 차원
+ * @returns {Object} 빈 trace 객체
+ */
+function createEmptyTrace(dimension) {
+    const emptyTrace = {
+        mode: 'markers',
+        marker: { size: 5, color: 'rgba(255, 0, 0, 0.5)' },
+        name: 'No Data'
     };
+    
+    switch (dimension) {
+        case 2:
+            emptyTrace.type = 'scatter';
+            emptyTrace.x = [];
+            emptyTrace.y = [];
+            break;
+        case 3:
+        case 4:
+            emptyTrace.type = 'scatter3d';
+            emptyTrace.x = [];
+            emptyTrace.y = [];
+            emptyTrace.z = [];
+            break;
+    }
+    
+    return emptyTrace;
 }
 
 /**
@@ -171,7 +150,7 @@ export function isValidNumber(value) {
 }
 
 /**
- * 3D 차트 색상 스케일 생성
+ * 3D 차트 색상 스케일 생성 (기존 유지 - 하위 호환성)
  * @param {Array} values - Z축 값들
  * @param {string} colorscale - 색상 스케일 이름 (기본: 'Viridis')
  * @returns {Object} 색상 설정 객체

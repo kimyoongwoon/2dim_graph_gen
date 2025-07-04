@@ -1,15 +1,12 @@
 // ============================================================================
-// 3dim_chart_gen/utils/index.js - 유틸리티 함수들 export
+// 3dim_chart_gen/utils/index.js - 유틸리티 함수들 export (정리됨)
 // ============================================================================
+
+// 🔥 스케일링 시스템
+export * from './scaling/index.js';
+
+// 🔥 통합 UI 컨트롤 (components + data 처리 통합 완료)
+export * from './ui_controls.js';
 
 // Plotly 헬퍼 함수들
 export * from './plotly_helpers.js';
-
-// 데이터 필터링 (나중에 구현)
-export * from './data_filter.js';
-
-// 데이터 집계 (나중에 구현)
-export * from './data_aggregation.js';
-
-// 윈도우 처리 (나중에 구현)
-export * from './window_processor.js';
