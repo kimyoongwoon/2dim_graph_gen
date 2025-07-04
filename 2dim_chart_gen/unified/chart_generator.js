@@ -1,162 +1,110 @@
 ﻿// ============================================================================
-// 2dim_chart_gen/unified/chart_generator.js - 경량화된 차트 생성 핵심 로직
+// chart_gen/unified/chart_generator.js - 통합 차트 생성 함수 (경로 수정됨)
 // ============================================================================
 
-import { createVisualization } from './chart_factory.js';
+import { processDataForChart } from './data_processor_unified.js';
 import { ChartWrapper } from './chart_wrapper.js';
+import { createVisualization } from '../chart_factory.js';
+import { showError_chart } from '../../shared/error_handler.js';
 
 /**
- * 차트 생성 핵심 함수
- * @param {Object} data - 가공된 데이터
- * @param {Object} config - 차트 설정  
- * @param {HTMLElement} containerElement - 컨테이너
- * @returns {ChartWrapper|null} 차트 래퍼 또는 null
+ * 통합 차트 생성 함수
+ * @param {Array} rawData - 원시 데이터
+ * @param {Object} config - 차트 설정 {type, dataMapping, options}
+ * @param {HTMLElement} containerElement - 컨테이너 엘리먼트
+ * @returns {ChartWrapper} 차트 래퍼 객체
  */
-export function createChart(data, config, containerElement) {
+export function generateChart(rawData, config, containerElement) {
+    console.log('[CHART_GENERATOR] 차트 생성 시작');
+    console.log('[CHART_GENERATOR] 설정:', config);
+
     try {
-        console.log('[CHART_GENERATOR] 차트 생성 시작');
-        
         // 입력 검증
-        if (!validateInputs(data, config, containerElement)) {
-            throw new Error('잘못된 입력 데이터');
+        if (!rawData || !Array.isArray(rawData) || rawData.length === 0) {
+            throw new Error('유효한 데이터가 없습니다');
         }
 
-        // 이전 차트 자동 정리 (Option A)
-        clearPreviousChart(containerElement);
-
-        // Chart.js 설정 생성
-        const chartConfig = createVisualization(data, config);
-        if (!chartConfig) {
-            throw new Error('차트 설정 생성 실패');
+        if (!config || !config.type || !config.dataMapping) {
+            throw new Error('차트 설정이 올바르지 않습니다');
         }
 
-        // 캔버스 생성 및 Chart.js 인스턴스 생성
-        const canvas = createCanvas(containerElement);
-        const chartInstance = new Chart(canvas, {
-            ...chartConfig,
-            options: {
-                ...chartConfig.options,
-                responsive: true,
-                maintainAspectRatio: false,
-                resizeDelay: 0,
-                animation: { duration: 300 }
-            }
+        if (!containerElement) {
+            throw new Error('컨테이너 엘리먼트가 필요합니다');
+        }
+
+        // 1단계: 데이터 처리 (unified 시스템)
+        console.log('[CHART_GENERATOR] 데이터 처리 시작');
+        const processedResult = processDataForChart(rawData, config.dataMapping);
+        const { data: chartData, metadata } = processedResult;
+
+        console.log('[CHART_GENERATOR] 처리된 데이터:', {
+            dataCount: chartData.length,
+            metadata: metadata
         });
 
-        // 래퍼 객체 생성 및 반환
-        const wrapper = new ChartWrapper(chartInstance, containerElement);
+        // 2단계: 기존 차트 시스템용 데이터셋 구성
+        const dataset = {
+            name: `${config.type} Chart`,
+            axes: metadata.axes,
+            visualizationTypes: [{ type: config.type }]
+        };
+
+        const vizType = {
+            name: config.type,
+            type: config.type
+        };
+
+        console.log('[CHART_GENERATOR] 데이터셋:', dataset);
+
+        // 3단계: 캔버스 생성 및 설정
+        const canvas = document.createElement('canvas');
+        canvas.style.width = '100%';
+        canvas.style.height = '100%';
+        canvas.style.position = 'absolute';
+        canvas.style.top = '0';
+        canvas.style.left = '0';
+
+        // 컨테이너 스타일 설정
+        containerElement.style.position = 'relative';
+        containerElement.style.overflow = 'hidden';
+        containerElement.appendChild(canvas);
+
+        // 4단계: Chart.js 설정 생성 (기존 팩토리 사용)
+        console.log('[CHART_GENERATOR] Chart.js 설정 생성');
+        const chartConfig = createVisualization(
+            dataset,
+            vizType,
+            chartData, // ✅ 이미 처리된 데이터 직접 사용
+            {}, // scalingConfig
+            {}, // colorScalingConfig
+            {}  // vizOptions
+        );
+
+        // 공통 Chart.js 옵션 적용
+        chartConfig.options = {
+            ...chartConfig.options,
+            responsive: false,
+            maintainAspectRatio: false,
+            resizeDelay: 0,
+            animation: { duration: 30 },
+            ...config.options // 사용자 옵션 병합
+        };
+
+        console.log('[CHART_GENERATOR] Chart.js 설정 준비 완료');
+
+        // 5단계: Chart.js 인스턴스 생성
+        const chartInstance = new Chart(canvas, chartConfig);
+
+        // 6단계: 래퍼 객체 생성
+        const chartWrapper = new ChartWrapper(chartInstance, containerElement, config);
+
         console.log('[CHART_GENERATOR] 차트 생성 완료');
-        
-        return wrapper;
+        return chartWrapper;
 
     } catch (error) {
-        console.error('[CHART_GENERATOR] 차트 생성 실패:', error);
-        showEmptyChart(containerElement, error.message);
-        return null;
-    }
-}
+        console.error('[CHART_GENERATOR] 차트 생성 오류:', error);
 
-/**
- * 입력 데이터 검증
- */
-function validateInputs(data, config, containerElement) {
-    if (!data || !data.chartData || !Array.isArray(data.chartData)) {
-        console.error('[CHART_GENERATOR] 잘못된 데이터 형식');
-        return false;
-    }
-
-    if (!config || !config.type) {
-        console.error('[CHART_GENERATOR] 차트 타입이 지정되지 않음');
-        return false;
-    }
-
-    if (!containerElement || !containerElement.appendChild) {
-        console.error('[CHART_GENERATOR] 유효하지 않은 컨테이너');
-        return false;
-    }
-
-    return true;
-}
-
-/**
- * 이전 차트 자동 정리 (Option A 방식)
- */
-function clearPreviousChart(container) {
-    try {
-        // 기존 캔버스와 차트 찾기
-        const existingCanvas = container.querySelector('canvas');
-        if (existingCanvas) {
-            // Chart.js 인스턴스가 있으면 정리
-            if (existingCanvas.chart) {
-                existingCanvas.chart.destroy();
-                console.log('[CHART_GENERATOR] 이전 차트 정리 완료');
-            }
-            existingCanvas.remove();
-        }
-
-        // 에러 메시지도 정리
-        const errorDiv = container.querySelector('.chart-error');
-        if (errorDiv) {
-            errorDiv.remove();
-        }
-
-    } catch (error) {
-        console.warn('[CHART_GENERATOR] 이전 차트 정리 중 오류:', error);
-        // 강제 정리
-        container.innerHTML = '';
-    }
-}
-
-/**
- * 캔버스 생성 및 컨테이너에 추가
- */
-function createCanvas(container) {
-    const canvas = document.createElement('canvas');
-    canvas.style.cssText = `
-        width: 100%;
-        height: 100%;
-        display: block;
-    `;
-    
-    container.appendChild(canvas);
-    return canvas;
-}
-
-/**
- * 에러 시 빈 차트 표시
- */
-function showEmptyChart(container, errorMessage) {
-    try {
-        clearPreviousChart(container);
-        
-        const errorDiv = document.createElement('div');
-        errorDiv.className = 'chart-error';
-        errorDiv.style.cssText = `
-            width: 100%;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #666;
-            font-family: Arial, sans-serif;
-            font-size: 14px;
-            text-align: center;
-            border: 1px dashed #ccc;
-            background-color: #f9f9f9;
-        `;
-        
-        errorDiv.innerHTML = `
-            <div>
-                <div>⚠️ 차트를 생성할 수 없습니다</div>
-                <div style="font-size: 12px; margin-top: 8px; color: #999;">
-                    ${errorMessage || '알 수 없는 오류'}
-                </div>
-            </div>
-        `;
-        
-        container.appendChild(errorDiv);
-        
-    } catch (error) {
-        console.error('[CHART_GENERATOR] 에러 차트 표시 실패:', error);
+        // 에러 차트 표시
+        return showError_chart(containerElement, error.message);
     }
 }

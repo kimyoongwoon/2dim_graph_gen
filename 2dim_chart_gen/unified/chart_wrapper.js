@@ -1,122 +1,181 @@
 // ============================================================================
-// 2dim_chart_gen/unified/chart_wrapper.js - ë‹¨ìˆœí™”ëœ ì°¨íŠ¸ ë˜í¼
+// chart_gen/unified/chart_wrapper.js - ·¡ÆÛ °´Ã¼ Å¬·¡½º
 // ============================================================================
 
+import { ResizeManager } from './resize_manager.js';
+
 /**
- * ë‹¨ìˆœí™”ëœ ì°¨íŠ¸ ë˜í¼ í´ë˜ìŠ¤
- * ì—…ë°ì´íŠ¸ ê¸°ëŠ¥ ì œê±°, ê¸°ë³¸ì ì¸ ê´€ë¦¬ ê¸°ëŠ¥ë§Œ ì œê³µ
+ * Chart.js ÀÎ½ºÅÏ½º¸¦ °¨½Î´Â ·¡ÆÛ Å¬·¡½º
+ * ÀÌº¥Æ®, ¸®»çÀÌÁî, ¸Ş¸ğ¸® °ü¸® µîÀ» ´ã´ç
  */
 export class ChartWrapper {
-    constructor(chartInstance, containerElement) {
+    constructor(chartInstance, containerElement, config) {
         this.chart = chartInstance;
         this.container = containerElement;
+        this.config = config;
+        this.callbacks = {};
         this.isDestroyed = false;
 
-        // Chart.js ì¸ìŠ¤í„´ìŠ¤ì— ë˜í¼ ì°¸ì¡° ì—°ê²° (ì •ë¦¬ ì‹œ ì‚¬ìš©)
-        if (this.chart && this.chart.canvas) {
-            this.chart.canvas.chart = this.chart;
-        }
+        // ResizeManager ÃÊ±âÈ­
+        this.resizeManager = new ResizeManager(this.container, () => {
+            this.resize();
+        });
 
-        console.log('[CHART_WRAPPER] ë˜í¼ ê°ì²´ ìƒì„± ì™„ë£Œ');
+        console.log('[CHART_WRAPPER] ·¡ÆÛ °´Ã¼ »ı¼º ¿Ï·á');
     }
 
     /**
-     * Chart.js ì¸ìŠ¤í„´ìŠ¤ ë°˜í™˜
-     * @returns {Chart|null} Chart.js ì¸ìŠ¤í„´ìŠ¤
+     * ÀÌº¥Æ® ¸®½º³Ê µî·Ï (Äİ¹é ÇÔ¼ö ¹æ½Ä)
+     * @param {string} eventType - ÀÌº¥Æ® Å¸ÀÔ ('dataUpdated', 'resized', 'error', 'destroyed')
+     * @param {Function} callback - Äİ¹é ÇÔ¼ö
      */
-    getChart() {
-        if (this.isDestroyed) {
-            console.warn('[CHART_WRAPPER] ì´ë¯¸ ì •ë¦¬ëœ ì°¨íŠ¸ì— ì ‘ê·¼ ì‹œë„');
-            return null;
+    on(eventType, callback) {
+        if (!this.callbacks[eventType]) {
+            this.callbacks[eventType] = [];
         }
-        return this.chart;
+        this.callbacks[eventType].push(callback);
     }
 
     /**
-     * ì°¨íŠ¸ ìˆ˜ë™ ë¦¬ì‚¬ì´ì¦ˆ
-     * ì™¸ë¶€ì—ì„œ ì»¨í…Œì´ë„ˆ í¬ê¸°ê°€ ë³€ê²½ëœ ê²½ìš° í˜¸ì¶œ
+     * ÀÌº¥Æ® ¸®½º³Ê Á¦°Å
+     * @param {string} eventType - ÀÌº¥Æ® Å¸ÀÔ
+     * @param {Function} callback - Á¦°ÅÇÒ Äİ¹é ÇÔ¼ö
+     */
+    off(eventType, callback) {
+        if (this.callbacks[eventType]) {
+            const index = this.callbacks[eventType].indexOf(callback);
+            if (index > -1) {
+                this.callbacks[eventType].splice(index, 1);
+            }
+        }
+    }
+
+    /**
+     * ÀÌº¥Æ® ¹ß»ı½ÃÅ°±â
+     * @param {string} eventType - ÀÌº¥Æ® Å¸ÀÔ
+     * @param {*} data - ÀÌº¥Æ® µ¥ÀÌÅÍ
+     */
+    emit(eventType, data) {
+        if (this.callbacks[eventType]) {
+            this.callbacks[eventType].forEach(callback => {
+                try {
+                    callback(data);
+                } catch (error) {
+                    console.error(`[CHART_WRAPPER] ÀÌº¥Æ® Äİ¹é ¿À·ù (${eventType}):`, error);
+                }
+            });
+        }
+    }
+
+    /**
+     * µ¥ÀÌÅÍ ¾÷µ¥ÀÌÆ®
+     * @param {Array} newData - »õ·Î¿î µ¥ÀÌÅÍ
+     */
+    updateData(newData) {
+        if (this.isDestroyed) {
+            console.warn('[CHART_WRAPPER] ÆÄ±«µÈ Â÷Æ®¿¡ µ¥ÀÌÅÍ ¾÷µ¥ÀÌÆ® ½Ãµµ');
+            return;
+        }
+
+        try {
+            // Chart.js µ¥ÀÌÅÍ ¾÷µ¥ÀÌÆ®
+            if (this.chart.data.datasets && this.chart.data.datasets[0]) {
+                this.chart.data.datasets[0].data = newData;
+                this.chart.update('none'); // ¾Ö´Ï¸ŞÀÌ¼Ç ¾øÀÌ ¾÷µ¥ÀÌÆ®
+            }
+
+            this.emit('dataUpdated', newData);
+            console.log('[CHART_WRAPPER] µ¥ÀÌÅÍ ¾÷µ¥ÀÌÆ® ¿Ï·á:', newData.length, '°³');
+
+        } catch (error) {
+            console.error('[CHART_WRAPPER] µ¥ÀÌÅÍ ¾÷µ¥ÀÌÆ® ¿À·ù:', error);
+            this.emit('error', error);
+        }
+    }
+
+    /**
+     * Â÷Æ® Å©±â Á¶Á¤
      */
     resize() {
         if (this.isDestroyed || !this.chart) {
-            console.warn('[CHART_WRAPPER] ì •ë¦¬ëœ ì°¨íŠ¸ ë¦¬ì‚¬ì´ì¦ˆ ì‹œë„');
             return;
         }
 
         try {
-            // Chart.js ë‚´ì¥ ë¦¬ì‚¬ì´ì¦ˆ ì‚¬ìš©
-            this.chart.resize();
-            console.log('[CHART_WRAPPER] ì°¨íŠ¸ ë¦¬ì‚¬ì´ì¦ˆ ì™„ë£Œ');
-            
+            // ÄÁÅ×ÀÌ³Ê Å©±â °¡Á®¿À±â
+            const rect = this.container.getBoundingClientRect();
+
+            // Äµ¹ö½º Å©±â °­Á¦ ¼³Á¤
+            const canvas = this.chart.canvas;
+            if (canvas) {
+                canvas.style.width = rect.width + 'px';
+                canvas.style.height = rect.height + 'px';
+                canvas.width = rect.width;
+                canvas.height = rect.height;
+            }
+
+            this.emit('resized', { width: rect.width, height: rect.height });
+            console.log('[CHART_WRAPPER] Å©±â Á¶Á¤:', rect.width, 'x', rect.height);
+
         } catch (error) {
-            console.error('[CHART_WRAPPER] ë¦¬ì‚¬ì´ì¦ˆ ì‹¤íŒ¨:', error);
+            console.error('[CHART_WRAPPER] Å©±â Á¶Á¤ ¿À·ù:', error);
+            this.emit('error', error);
         }
     }
 
     /**
-     * ì°¨íŠ¸ ì •ë¦¬ ë° ë©”ëª¨ë¦¬ í•´ì œ
+     * ¼³Á¤ Á¤º¸ ¹İÈ¯
+     */
+    getConfig() {
+        return { ...this.config };
+    }
+
+    /**
+     * Â÷Æ® ¹× °ü·Ã ¸®¼Ò½º Á¤¸®
      */
     destroy() {
         if (this.isDestroyed) {
-            console.warn('[CHART_WRAPPER] ì´ë¯¸ ì •ë¦¬ëœ ì°¨íŠ¸ ì •ë¦¬ ì‹œë„');
             return;
         }
 
         try {
-            // Chart.js ì¸ìŠ¤í„´ìŠ¤ ì •ë¦¬
+            // ResizeManager Á¤¸®
+            if (this.resizeManager) {
+                this.resizeManager.destroy();
+                this.resizeManager = null;
+            }
+
+            // Chart.js ÀÎ½ºÅÏ½º Á¤¸®
             if (this.chart) {
                 this.chart.destroy();
                 this.chart = null;
             }
 
-            // ì»¨í…Œì´ë„ˆ ì •ë¦¬ (ì„ íƒì )
-            if (this.container) {
-                const canvas = this.container.querySelector('canvas');
-                if (canvas) {
-                    canvas.remove();
-                }
-            }
+            // ÀÌº¥Æ® ¸®½º³Ê ¸ğµÎ Á¦°Å
+            this.callbacks = {};
 
-            // ìƒíƒœ ì—…ë°ì´íŠ¸
-            this.container = null;
             this.isDestroyed = true;
+            this.emit('destroyed', {});
 
-            console.log('[CHART_WRAPPER] ì°¨íŠ¸ ì •ë¦¬ ì™„ë£Œ');
+            console.log('[CHART_WRAPPER] ·¡ÆÛ °´Ã¼ Á¤¸® ¿Ï·á');
 
         } catch (error) {
-            console.error('[CHART_WRAPPER] ì •ë¦¬ ê³¼ì • ì˜¤ë¥˜:', error);
+            console.error('[CHART_WRAPPER] Á¤¸® °úÁ¤ ¿À·ù:', error);
         }
     }
 
-    /**
-     * ì°¨íŠ¸ ìƒíƒœ í™•ì¸
-     * @returns {boolean} ì°¨íŠ¸ê°€ ìœ íš¨í•œì§€ ì—¬ë¶€
-     */
-    isValid() {
-        return !this.isDestroyed && this.chart !== null;
+    // Golden Layout ¿¬µ¿ ÁØºñ (ÁÖ¼®Ã³¸®)
+    /*
+    attachToGoldenLayout(container) {
+        // Golden Layout ÄÁÅ×ÀÌ³Ê ÀÌº¥Æ® ¿¬°á
+        container.on('resize', () => this.resize());
+        container.on('destroy', () => this.destroy());
+        container.on('show', () => this.emit('show', {}));
+        container.on('hide', () => this.emit('hide', {}));
     }
 
-    /**
-     * ì»¨í…Œì´ë„ˆ ìš”ì†Œ ë°˜í™˜
-     * @returns {HTMLElement|null} ì»¨í…Œì´ë„ˆ ìš”ì†Œ
-     */
-    getContainer() {
-        return this.isDestroyed ? null : this.container;
+    detachFromGoldenLayout() {
+        // Golden Layout ÀÌº¥Æ® ¿¬°á ÇØÁ¦
     }
-
-    /**
-     * ì°¨íŠ¸ ê¸°ë³¸ ì •ë³´ ë°˜í™˜
-     * @returns {Object} ì°¨íŠ¸ ì •ë³´
-     */
-    getInfo() {
-        if (this.isDestroyed) {
-            return { status: 'destroyed' };
-        }
-
-        return {
-            status: 'active',
-            type: this.chart?.config?.type || 'unknown',
-            datasetCount: this.chart?.data?.datasets?.length || 0,
-            pointCount: this.chart?.data?.datasets?.[0]?.data?.length || 0
-        };
-    }
+    */
 }
