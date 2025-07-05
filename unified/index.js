@@ -5,8 +5,8 @@
 // 메인 차트 생성기 (3D → 통합으로 확장)
 export { generateChart, generateMultipleCharts } from './chart_generator.js';
 
-// 차트 래퍼 (3D → 통합으로 확장)
-export { ChartWrapper } from './chart_wrapper.js';
+// 차트 래퍼 (3D → 통합으로 확장) - 🔥 ChartWrapperEnhanced 추가
+export { ChartWrapper, ChartWrapperEnhanced } from './chart_wrapper.js';
 
 // 데이터 처리 (3D → 통합으로 확장)
 export { processDataForChart, createTooltipData } from './data_processor.js';

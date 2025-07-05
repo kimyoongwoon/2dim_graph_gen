@@ -3,19 +3,19 @@
 // ============================================================================
 
 import { processDataForChart, createTooltipData } from './data_processor.js';
-import { ChartWrapper } from './chart_wrapper.js';
+import { ChartWrapper, ChartWrapperEnhanced } from './chart_wrapper.js';
 import { createVisualization } from '../chart_factory.js';
-import { createControlPanel, createSliderContainer } from '../utils/ui_controls.js';
+import { createControlPanel, createSliderContainer, connectDataFilters } from '../utils/ui_controls.js';
 
 /**
  * 통합 차트 생성 메인 함수 (2D/3D/4D 지원)
  * @param {Array} rawData - 원시 데이터
  * @param {Object} config - 차트 설정 {type, dataMapping, scalingConfig, colorConfig, options}
  * @param {HTMLElement} containerElement - 컨테이너 엘리먼트
- * @returns {ChartWrapper} 차트 래퍼 객체
+ * @returns {ChartWrapperEnhanced} 향상된 차트 래퍼 객체
  */
 export function generateChart(rawData, config, containerElement) {
-    console.log('[CHART_GENERATOR] 통합 차트 생성 시작');
+    console.log('[CHART_GENERATOR] 통합 차트 생성 시작 (Enhanced + Filtering 버전)');
     console.log('[CHART_GENERATOR] 설정:', config);
 
     try {
@@ -33,7 +33,8 @@ export function generateChart(rawData, config, containerElement) {
             originalCount: metadata.originalCount,
             isLimited: metadata.isLimited,
             dimensions: metadata.dim,
-            chartType: config.type
+            chartType: config.type,
+            axes: metadata.axes.map(axis => axis.name)
         });
 
         // 3단계: 컨테이너 구조 생성
@@ -67,7 +68,7 @@ export function generateChart(rawData, config, containerElement) {
         // 6단계: Plotly 차트 렌더링
         console.log('[CHART_GENERATOR] Plotly 차트 렌더링');
         const plotlyDiv = chartStructure.plotlyContainer;
-        
+
         // Plotly 렌더링
         if (!window.Plotly) {
             throw new Error('Plotly.js가 로드되지 않았습니다');
@@ -81,19 +82,20 @@ export function generateChart(rawData, config, containerElement) {
             chartConfig.config
         );
 
-        // 7단계: 차트 래퍼 생성
-        const chartWrapper = new ChartWrapper(
+        // 7단계: 향상된 차트 래퍼 생성 🔥
+        console.log('[CHART_GENERATOR] ChartWrapperEnhanced 생성');
+        const chartWrapper = new ChartWrapperEnhanced(
             plotlyDiv,
             containerElement,
             config,
             chartConfig
         );
 
-        // 8단계: UI 컴포넌트 연결 (기능은 나중에)
-        setupUIComponents(chartStructure, chartWrapper, metadata);
+        // 8단계: UI 컴포넌트 연결 및 필터링 설정 🔥
+        setupUIComponents(chartStructure, chartWrapper, metadata, rawData);
 
-        console.log('[CHART_GENERATOR] 차트 생성 완료');
-        
+        console.log('[CHART_GENERATOR] 향상된 차트 생성 완료 (필터링 포함)');
+
         // 제한 경고 표시
         if (metadata.isLimited) {
             console.warn(`[CHART_GENERATOR] ⚠️ ${config.type}: 성능상 처음 16개 데이터만 표시됨 (전체 ${metadata.originalCount}개)`);
@@ -183,47 +185,55 @@ function validateChartConfig(rawData, config, containerElement) {
 }
 
 /**
- * 차트용 컨테이너 구조 생성 (2D/3D/4D 공통)
+ * 차트용 컨테이너 구조 생성 (2D/3D/4D 공통) - 🔥 개선된 버전
  * @param {HTMLElement} containerElement - 메인 컨테이너
  * @param {Object} config - 차트 설정
  * @returns {Object} 생성된 구조 엘리먼트들
  */
 export function createChartContainer(containerElement, config) {
-    console.log('[CHART_GENERATOR] 컨테이너 구조 생성');
+    console.log('[CHART_GENERATOR] 개선된 컨테이너 구조 생성');
 
-    // 메인 래퍼
+    // 메인 래퍼 - 🔥 높이 설정 개선
     const wrapper = document.createElement('div');
     wrapper.className = 'chart-wrapper';
     wrapper.style.cssText = `
         width: 100%;
-        height: 100%;
+        height: 100vh;
+        max-height: 800px;
+        min-height: 500px;
         display: flex;
         flex-direction: column;
         position: relative;
+        box-sizing: border-box;
+        padding: 10px;
     `;
 
-    // Plotly 차트 컨테이너
+    // Plotly 차트 컨테이너 - 🔥 여백 개선
     const plotlyContainer = document.createElement('div');
     plotlyContainer.className = 'plotly-container';
     plotlyContainer.style.cssText = `
         flex: 1;
         width: 100%;
-        min-height: 400px;
+        min-height: 450px;
         position: relative;
+        margin: 10px 0;
+        overflow: hidden;
     `;
 
     // 컨트롤 패널 컨테이너
     const controlPanelContainer = document.createElement('div');
     controlPanelContainer.className = 'control-panel-container';
     controlPanelContainer.style.cssText = `
-        margin-bottom: 10px;
+        margin-bottom: 15px;
+        flex-shrink: 0;
     `;
 
     // 슬라이더 컨테이너
     const sliderContainerDiv = document.createElement('div');
     sliderContainerDiv.className = 'slider-container-wrapper';
     sliderContainerDiv.style.cssText = `
-        margin-bottom: 10px;
+        margin-bottom: 15px;
+        flex-shrink: 0;
     `;
 
     // 구조 조립
@@ -243,26 +253,61 @@ export function createChartContainer(containerElement, config) {
 }
 
 /**
- * UI 컴포넌트들 설정 (기능 연결은 나중에)
+ * 🔥 UI 컴포넌트들 설정 및 필터링 연동 (metadata + originalData 전달)
  * @param {Object} chartStructure - 차트 구조 엘리먼트들
- * @param {ChartWrapper} chartWrapper - 차트 래퍼
- * @param {Object} metadata - 메타데이터
+ * @param {ChartWrapperEnhanced} chartWrapper - 향상된 차트 래퍼
+ * @param {Object} metadata - 차트 메타데이터 (필터링 필드 감지용)
+ * @param {Array} rawData - 원본 데이터 (필터링용)
  */
-function setupUIComponents(chartStructure, chartWrapper, metadata) {
-    console.log('[CHART_GENERATOR] UI 컴포넌트 설정');
+function setupUIComponents(chartStructure, chartWrapper, metadata, rawData) {
+    console.log('[CHART_GENERATOR] 향상된 UI 컴포넌트 설정 (필터링 연동)');
+    console.log('[CHART_GENERATOR] 메타데이터:', metadata);
+    console.log('[CHART_GENERATOR] 원본 데이터 수:', rawData?.length);
 
     try {
-        // 통합 UI 컨트롤 생성 (ui_controls.js 사용)
+        // 1. 통합 UI 컨트롤 생성 (기존 기능)
         const controlPanel = createControlPanel(chartStructure.controlPanelContainer, chartWrapper);
-        
-        // 슬라이더 컨테이너 생성 (ui_controls.js 사용)
-        const sliderContainer = createSliderContainer(chartStructure.sliderContainerDiv);
 
-        console.log('[CHART_GENERATOR] 통합 UI 컨트롤 생성 완료 (기능 연결됨)');
+        // 2. 🔥 metadata 기반 슬라이더 컨테이너 생성 (새로운 기능)
+        const sliderContainer = createSliderContainer(
+            chartStructure.sliderContainerDiv,
+            metadata,     // 차트 메타데이터 (사용된 필드 정보)
+            rawData,      // 원본 데이터 (필터링 대상 필드 감지용)
+            chartWrapper  // 차트 래퍼 (필터링 적용용)
+        );
+
+        // 3. 🔥 데이터 필터 연동 설정
+        const filterFunction = connectDataFilters(chartWrapper, rawData);
+
+        if (filterFunction) {
+            console.log('[CHART_GENERATOR] 데이터 필터 연동 성공');
+
+            // chartWrapper에 필터 함수 저장 (나중에 사용할 수 있도록)
+            chartWrapper._applyFilter = filterFunction;
+
+            // 필터링 정보 저장 (디버깅용)
+            chartWrapper._filteringInfo = {
+                totalFields: Object.keys(rawData[0] || {}).length,
+                usedFields: metadata.axes.map(axis => axis.name),
+                originalDataCount: rawData.length
+            };
+
+            console.log('[CHART_GENERATOR] 필터링 정보:', chartWrapper._filteringInfo);
+        }
+
+        console.log('[CHART_GENERATOR] 향상된 UI 컨트롤 생성 완료 (metadata 기반 필터링 연동됨)');
 
     } catch (error) {
         console.warn('[CHART_GENERATOR] UI 컨트롤 설정 오류:', error);
         // UI 오류는 차트 생성을 중단시키지 않음
+
+        // 최소한의 기본 UI라도 생성
+        try {
+            createControlPanel(chartStructure.controlPanelContainer, chartWrapper);
+            console.log('[CHART_GENERATOR] 기본 컨트롤 패널만 생성됨');
+        } catch (fallbackError) {
+            console.error('[CHART_GENERATOR] 기본 UI 생성도 실패:', fallbackError);
+        }
     }
 }
 
@@ -311,16 +356,18 @@ export function createErrorChart(containerElement, errorMessage = '차트 생성
     return {
         plotlyDiv: null,
         container: containerElement,
-        on: () => {},
-        off: () => {},
-        emit: () => {},
-        updateData: () => {},
-        resize: () => {},
+        on: () => { },
+        off: () => { },
+        emit: () => { },
+        updateData: () => { },
+        resize: () => { },
         getConfig: () => ({}),
         getData: () => null,
-        toggleTrace: () => {},
-        adjustOpacity: () => {},
-        setCameraPosition: () => {},
+        getChartType: () => 'error',
+        toggleTrace: () => { },
+        adjustOpacity: () => { },
+        setCameraPosition: () => { },
+        setAxisRange: () => { },
         destroy: () => {
             containerElement.innerHTML = '';
         }
@@ -333,19 +380,19 @@ export function createErrorChart(containerElement, errorMessage = '차트 생성
  * @returns {Array} 차트 래퍼 배열
  */
 export function generateMultipleCharts(configurations) {
-    console.log('[CHART_GENERATOR] 다중 차트 생성:', configurations.length, '개');
+    console.log('[CHART_GENERATOR] 다중 차트 생성 (Enhanced + Filtering):', configurations.length, '개');
 
     const chartWrappers = [];
 
     configurations.forEach((config, index) => {
         try {
             const wrapper = generateChart(
-                config.rawData, 
-                config.config, 
+                config.rawData,
+                config.config,
                 config.containerElement
             );
             chartWrappers.push(wrapper);
-            console.log(`[CHART_GENERATOR] ${index + 1}번째 차트 생성 완료`);
+            console.log(`[CHART_GENERATOR] ${index + 1}번째 향상된 차트 생성 완료 (필터링 포함)`);
         } catch (error) {
             console.error(`[CHART_GENERATOR] ${index + 1}번째 차트 생성 실패:`, error);
             chartWrappers.push(null);
