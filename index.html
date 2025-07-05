@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>데이터 생성기</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>고차원 데이터 생성기</h2>
+            <p>C++ Binary Data Generator</p>
+        </div>
+
+        <!-- 진행 단계 표시 -->
+        <div class="step-indicator">
+            <div class="step active" id="step1">1. 데이터 생성</div>
+            <div class="step" id="step2">2. 차트 설정</div>
+            <div class="step" id="step3">3. 시각화</div>
+        </div>
+
+        <!-- 데이터 생성 섹션 -->
+        <div class="section">
+            <h4>1. 데이터 필드 선택 및 생성</h4>
+            <div class="field-selection">
+                <div class="field-checkbox">
+                    <input type="checkbox" value="slippage" checked>
+                    <label><strong>slippage</strong> (정수) <br><small>범위: -10 ~ +9</small></label>
+                </div>
+                <div class="field-checkbox">
+                    <input type="checkbox" value="parameter" checked>
+                    <label><strong>parameter</strong> (정수) <br><small>범위: 0 ~ 99</small></label>
+                </div>
+                <div class="field-checkbox">
+                    <input type="checkbox" value="total_value" checked>
+                    <label><strong>total_value</strong> (실수) <br><small>범위: 1000-1499</small></label>
+                </div>
+                <div class="field-checkbox">
+                    <input type="checkbox" value="log_return">
+                    <label><strong>log_return</strong> (실수) <br><small>범위: -0.5 ~ +0.5</small></label>
+                </div>
+                <div class="field-checkbox">
+                    <input type="checkbox" value="acc_return">
+                    <label><strong>acc_return</strong> (실수) <br><small>누적 수익률</small></label>
+                </div>
+                <div class="field-checkbox">
+                    <input type="checkbox" value="time">
+                    <label><strong>time</strong> (문자열) <br><small>ISO 타임스탬프</small></label>
+                </div>
+            </div>
+            <div class="controls">
+                <label><strong>데이터 개수:</strong></label>
+                <input type="number" id="dataCount" value="100" min="1" max="10000">
+                <!-- 🔥 onclick 제거, id 추가 -->
+                <button id="generateDataBtn">데이터 생성</button>
+            </div>
+        </div>
+
+        <div id="status" class="status info">
+            필드를 선택하고 데이터를 생성해주세요
+        </div>
+
+        <!-- 데이터 미리보기 -->
+        <div class="section" id="dataPreviewSection" style="display: none;">
+            <h4>4. 데이터 미리보기 (최대 10개)</h4>
+            <div class="data-preview">
+                <table id="dataTable">
+                    <thead id="tableHeader"></thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+            <div class="controls">
+                <!-- 🔥 onclick 제거, id 추가 -->
+                <button id="goToChartBtn" disabled>차트 생성하러 가기</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="main.js"></script>
+
+</body>
+</html>
