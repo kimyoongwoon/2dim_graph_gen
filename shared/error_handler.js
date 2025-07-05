@@ -1,16 +1,16 @@
 // ============================================================================
-// shared/error_handler.js - ¿¡·¯ Ã³¸® ½Ã½ºÅÛ
+// shared/error_handler.js - ï¿½ï¿½ï¿½ï¿½ Ã³ï¿½ï¿½ ï¿½Ã½ï¿½ï¿½ï¿½
 // ============================================================================
 
 /**
- * ÀÏ¹Ý ¿¡·¯ ¸Þ½ÃÁö Ç¥½Ã (±âÁ¸ showError ÇÔ¼ö)
- * @param {string} message - ¿¡·¯ ¸Þ½ÃÁö
+ * ï¿½Ï¹ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Þ½ï¿½ï¿½ï¿½ Ç¥ï¿½ï¿½ (ï¿½ï¿½ï¿½ï¿½ showError ï¿½Ô¼ï¿½)
+ * @param {string} message - ï¿½ï¿½ï¿½ï¿½ ï¿½Þ½ï¿½ï¿½ï¿½
  */
 export function showError(message) {
-    console.error('[ERROR_HANDLER] ¿¡·¯:', message);
+    console.error('[ERROR_HANDLER] ï¿½ï¿½ï¿½ï¿½:', message);
 
     const errorDiv = document.getElementById('errorDisplay') || createErrorDisplay();
-    errorDiv.textContent = `¿¡·¯: ${message}`;
+    errorDiv.textContent = `ï¿½ï¿½ï¿½ï¿½: ${message}`;
     errorDiv.style.display = 'block';
 
     setTimeout(() => {
@@ -19,7 +19,7 @@ export function showError(message) {
 }
 
 /**
- * ¿¡·¯ Ç¥½Ã¿ë div »ý¼º
+ * ï¿½ï¿½ï¿½ï¿½ Ç¥ï¿½Ã¿ï¿½ div ï¿½ï¿½ï¿½ï¿½
  */
 function createErrorDisplay() {
     const errorDiv = document.createElement('div');
@@ -39,18 +39,18 @@ function createErrorDisplay() {
 }
 
 /**
- * ¿¡·¯ Â÷Æ® Ç¥½Ã
- * @param {HTMLElement} containerElement - ÄÁÅ×ÀÌ³Ê ¿¤¸®¸ÕÆ®
- * @param {string} errorMessage - ¿¡·¯ ¸Þ½ÃÁö
- * @returns {Object} ¿¡·¯ Â÷Æ® °´Ã¼
+ * ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Æ® Ç¥ï¿½ï¿½
+ * @param {HTMLElement} containerElement - ï¿½ï¿½ï¿½ï¿½ï¿½Ì³ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®
+ * @param {string} errorMessage - ï¿½ï¿½ï¿½ï¿½ ï¿½Þ½ï¿½ï¿½ï¿½
+ * @returns {Object} ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Æ® ï¿½ï¿½Ã¼
  */
-export function showError_chart(containerElement, errorMessage = 'Â÷Æ® »ý¼º¿¡ ½ÇÆÐÇß½À´Ï´Ù') {
-    console.error('[ERROR_HANDLER] Â÷Æ® ¿¡·¯:', errorMessage);
+export function showError_chart(containerElement, errorMessage = 'ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ß½ï¿½ï¿½Ï´ï¿½') {
+    console.error('[ERROR_HANDLER] ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½:', errorMessage);
 
-    // ÄÁÅ×ÀÌ³Ê Á¤¸®
+    // ï¿½ï¿½ï¿½ï¿½ï¿½Ì³ï¿½ ï¿½ï¿½ï¿½ï¿½
     containerElement.innerHTML = '';
 
-    // Äµ¹ö½º »ý¼º
+    // Äµï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
     const canvas = document.createElement('canvas');
     canvas.width = containerElement.clientWidth || 400;
     canvas.height = containerElement.clientHeight || 300;
@@ -58,7 +58,7 @@ export function showError_chart(containerElement, errorMessage = 'Â÷Æ® »ý¼º¿¡ ½Ç
     canvas.style.height = '100%';
     containerElement.appendChild(canvas);
 
-    // Äµ¹ö½º¿¡ ¿¡·¯ ¸Þ½ÃÁö ±×¸®±â
+    // Äµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Þ½ï¿½ï¿½ï¿½ ï¿½×¸ï¿½ï¿½ï¿½
     const ctx = canvas.getContext('2d');
     ctx.fillStyle = '#f8d7da';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -69,7 +69,7 @@ export function showError_chart(containerElement, errorMessage = 'Â÷Æ® »ý¼º¿¡ ½Ç
     ctx.textBaseline = 'middle';
     ctx.fillText(errorMessage, canvas.width / 2, canvas.height / 2);
 
-    // ¿¡·¯ Â÷Æ® °´Ã¼ ¹ÝÈ¯
+    // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Æ® ï¿½ï¿½Ã¼ ï¿½ï¿½È¯
     return {
         chart: null,
         on: () => { },
@@ -84,30 +84,30 @@ export function showError_chart(containerElement, errorMessage = 'Â÷Æ® »ý¼º¿¡ ½Ç
     };
 }
 
-// Àü¿ª µ¥ÀÌÅÍ °ü¸®
+// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 let raw_data = null;
 
 /**
- * Àü¿ª µ¥ÀÌÅÍ ¼³Á¤
- * @param {Array} data - ¿ø½Ã µ¥ÀÌÅÍ
+ * ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+ * @param {Array} data - ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
  */
 export function setRawData(data) {
     raw_data = data;
-    console.log('[ERROR_HANDLER] Àü¿ª µ¥ÀÌÅÍ ¼³Á¤:', data?.length, '°³');
+    console.log('[ERROR_HANDLER] ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½:', data?.length, 'ï¿½ï¿½');
 }
 
 /**
- * Àü¿ª µ¥ÀÌÅÍ °¡Á®¿À±â
- * @returns {Array} ¿ø½Ã µ¥ÀÌÅÍ
+ * ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @returns {Array} ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
  */
 export function getRawData() {
     return raw_data;
 }
 
 /**
- * ¸ðµç Â÷Æ® µ¥ÀÌÅÍ Á¤¸®
+ * ï¿½ï¿½ï¿½ ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
  */
 export function clearAllChartData() {
     raw_data = null;
-    console.log('[ERROR_HANDLER] Àü¿ª µ¥ÀÌÅÍ Á¤¸® ¿Ï·á');
+    console.log('[ERROR_HANDLER] ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ï·ï¿½');
 }
