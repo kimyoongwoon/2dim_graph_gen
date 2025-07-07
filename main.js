@@ -2,12 +2,8 @@
 // main.js - 데이터 생성 페이지 로직 (data_pipeline 모듈 사용)
 // ============================================================================
 
-import {
-    qwebchannelReceiver,
-    dataDeserializer,
-    sessionStorageManager,
-    dataValidator
-} from './data_pipeline/index.js';
+import { qwebchannelReceiver, dataDeserializer, dataValidator } from './data_pipeline_generation_source/index.js';
+import { sessionStorageManager } from './shared/session_storage_manager/index.js';
 
 import { clearAllChartData } from './shared/error_handler.js';
 
