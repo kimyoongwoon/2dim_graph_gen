@@ -526,6 +526,35 @@ function hideChartTypes() {
 }
 
 // ============================================================================
+// 설정 빌더 함수들
+// ============================================================================
+
+function buildScalingConfig() {
+    const scalingType = document.getElementById('sizeScaling')?.value || 'default';
+    
+    switch (scalingType) {
+        case 'sigmoid':
+            const k = parseFloat(document.getElementById('sigmoidK')?.value) || 1.0;
+            return {
+                type: 'sigmoid',
+                params: { k }
+            };
+            
+        case 'linear':
+            // 기본 선형 파라미터 (필요시 UI로 확장 가능)
+            return {
+                type: 'linear',
+                params: { a: 1.0, b: 0 }
+            };
+            
+        default:
+            return {
+                type: 'default'
+            };
+    }
+}
+
+// ============================================================================
 // 네비게이션 함수들
 // ============================================================================
 
@@ -560,10 +589,8 @@ window.proceedToVisualization = function() {
         chartType,
         selectedFields,
         is3D: currentIs3D,
-        scalingConfig: {
-            type: document.getElementById('sizeScaling')?.value || 'default',
-            sigmoidK: parseFloat(document.getElementById('sigmoidK')?.value) || 1.0
-        }
+        scalingConfig: buildScalingConfig(),
+        colorConfig: { type: 'blueRed' } // 기본 색상 설정
     };
 
     try {

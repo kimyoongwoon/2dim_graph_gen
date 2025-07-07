@@ -5,8 +5,8 @@
 import { sessionStorageManager } from './shared/session_storage_manager/index.js';
 import { showError } from './shared/error_handler.js';
 
-// 통합 시스템 import (3dim_chart_gen이 있다고 가정)
-// import { generateChart } from './3dim_chart_gen/index.js';
+// 3dim_chart_gen 통합 시스템 import
+import { generateChart } from './3dim_chart_gen/index.js';
 
 // 전역 변수들
 let raw_data = null;
@@ -76,10 +76,11 @@ function createVisualization() {
         canvasWrapper.style.width = '100%';
         canvasWrapper.style.height = '600px';
 
-        // 차트 생성 (통합 시스템 사용)
-        // TODO: 3dim_chart_gen 모듈이 구현되면 활성화
-        /*
+        // 3dim_chart_gen용 config 변환
         const unifiedConfig = convertToUnifiedConfig(chartConfig);
+        console.log('[VISUALIZATION] 변환된 config:', unifiedConfig);
+
+        // 차트 생성 (3dim_chart_gen 사용)
         currentChartWrapper = generateChart(raw_data, unifiedConfig, canvasWrapper);
         
         // 이벤트 리스너 등록
@@ -87,12 +88,17 @@ function createVisualization() {
             console.error('[VISUALIZATION] 차트 에러:', error);
             showError('차트 오류: ' + error.message);
         });
-        */
 
-        // 임시: Plotly로 간단한 차트 생성
-        createTemporaryPlotlyChart(canvasWrapper);
+        currentChartWrapper.on('dataUpdated', (data) => {
+            console.log('[VISUALIZATION] 데이터 업데이트:', data.length, '개');
+        });
 
-        updateChartInfo(`차트 생성 완료: ${chartConfig.chartType} (${chartConfig.selectedFields.join(' → ')})`, 'success');
+        currentChartWrapper.on('dataLimited', (info) => {
+            console.warn('[VISUALIZATION] 데이터 제한:', info);
+            updateChartInfo(`⚠️ 성능상 ${info.total}개 데이터 중 ${info.displayed}개만 표시됩니다`, 'info');
+        });
+
+        updateChartInfo(`✅ 차트 생성 완료: ${chartConfig.chartType} (${chartConfig.selectedFields.join(' → ')})`, 'success');
 
     } catch (error) {
         console.error('[VISUALIZATION] 차트 생성 오류:', error);
@@ -101,170 +107,113 @@ function createVisualization() {
     }
 }
 
-// 임시 Plotly 차트 생성 함수 (3dim_chart_gen 구현 전까지 사용)
-function createTemporaryPlotlyChart(container) {
-    const { chartType, selectedFields, is3D } = chartConfig;
-    
-    if (is3D) {
-        // 3D 차트
-        const xField = selectedFields[0];
-        const yField = selectedFields[1];
-        const zField = selectedFields[2];
-
-        const trace = {
-            x: raw_data.map(d => d[xField]),
-            y: raw_data.map(d => d[yField]),
-            z: raw_data.map(d => d[zField]),
-            mode: 'markers',
-            type: 'scatter3d',
-            marker: {
-                size: 5,
-                color: raw_data.map(d => d[zField]),
-                colorscale: 'Viridis',
-                showscale: true
-            }
-        };
-
-        const layout = {
-            title: `3D Scatter Plot: ${xField} × ${yField} × ${zField}`,
-            scene: {
-                xaxis: { title: xField },
-                yaxis: { title: yField },
-                zaxis: { title: zField }
-            },
-            margin: { l: 0, r: 0, b: 0, t: 50 }
-        };
-
-        Plotly.newPlot(container, [trace], layout, { responsive: true });
-
-    } else {
-        // 2D 차트
-        const xField = selectedFields[0];
-        const yField = selectedFields[1];
-
-        if (chartConfig.dimension === 1) {
-            // 1차원 차트
-            const values = raw_data.map(d => d[xField]);
-            const isNumeric = typeof values[0] === 'number';
-
-            if (isNumeric) {
-                // 선형 차트
-                const trace = {
-                    y: values,
-                    type: 'scatter',
-                    mode: 'lines+markers',
-                    name: xField
-                };
-
-                const layout = {
-                    title: `Line Chart: ${xField}`,
-                    xaxis: { title: 'Index' },
-                    yaxis: { title: xField },
-                    margin: { l: 50, r: 50, b: 50, t: 50 }
-                };
-
-                Plotly.newPlot(container, [trace], layout, { responsive: true });
-            } else {
-                // 카테고리 차트
-                const categories = [...new Set(values)];
-                const counts = categories.map(cat => values.filter(v => v === cat).length);
-
-                const trace = {
-                    x: categories,
-                    y: counts,
-                    type: 'bar',
-                    name: xField
-                };
-
-                const layout = {
-                    title: `Category Chart: ${xField}`,
-                    xaxis: { title: xField },
-                    yaxis: { title: 'Count' },
-                    margin: { l: 50, r: 50, b: 50, t: 50 }
-                };
-
-                Plotly.newPlot(container, [trace], layout, { responsive: true });
-            }
-
-        } else {
-            // 2차원 이상 차트
-            const trace = {
-                x: raw_data.map(d => d[xField]),
-                y: raw_data.map(d => d[yField]),
-                mode: 'markers',
-                type: 'scatter',
-                marker: { size: 8 }
-            };
-
-            // 크기 인코딩
-            if (chartConfig.dimension >= 3 && selectedFields[2]) {
-                const sizeField = selectedFields[2];
-                trace.marker.size = raw_data.map(d => Math.max(5, (d[sizeField] || 0) / 10));
-            }
-
-            // 색상 인코딩
-            if (chartConfig.dimension >= 3 && selectedFields[2] && (chartConfig.chartType.includes('color') || chartConfig.dimension === 4)) {
-                const colorField = chartConfig.dimension === 4 ? selectedFields[3] : selectedFields[2];
-                trace.marker.color = raw_data.map(d => d[colorField]);
-                trace.marker.colorscale = 'Viridis';
-                trace.marker.showscale = true;
-            }
-
-            const layout = {
-                title: `Scatter Plot: ${xField} × ${yField}`,
-                xaxis: { title: xField },
-                yaxis: { title: yField },
-                margin: { l: 50, r: 50, b: 50, t: 50 }
-            };
-
-            Plotly.newPlot(container, [trace], layout, { responsive: true });
-        }
-    }
-}
-
-// 통합 시스템용 config 변환 (3dim_chart_gen 구현 시 사용)
+// 3dim_chart_gen용 config 변환
 function convertToUnifiedConfig(chartConfig) {
+    const { chartType, selectedFields, dimension, is3D, scalingConfig } = chartConfig;
+    
+    // 차트 타입 매핑
+    const unifiedType = mapChartType(chartType, is3D, dimension);
+    
+    // 데이터 매핑 생성
+    const dataMapping = createDataMapping(selectedFields, unifiedType, is3D);
+    
     return {
-        type: mapChartType(chartConfig.chartType, chartConfig.is3D),
-        dataMapping: createDataMapping(chartConfig.selectedFields, chartConfig.dimension, chartConfig.is3D),
-        scalingConfig: chartConfig.scalingConfig || { type: 'default' },
+        type: unifiedType,
+        dataMapping,
+        scalingConfig: scalingConfig || { type: 'default' },
         colorConfig: { type: 'blueRed' }
     };
 }
 
-function mapChartType(oldType, is3D) {
+function mapChartType(chartType, is3D, dimension) {
     if (is3D) {
         return '3d_surface_scatter';
     }
-
+    
+    // 2D 차트 타입 매핑
     const mapping = {
+        // 1차원
+        'line1d': '2d_scatter',
+        'category': '2d_scatter',
+        
+        // 2차원
         'scatter': '2d_scatter',
         'size': '2d_size',
         'color': '2d_color',
+        
+        // 3차원
         'scatter_size': '3d_scatter_size',
-        'scatter_color': '3d_scatter_color',
+        'scatter_color': '3d_scatter_color', 
         'size_color': '3d_size_color',
+        
+        // 4차원
         'scatter_size_color': '4d_scatter_size_color'
     };
-
-    return mapping[oldType] || oldType;
+    
+    return mapping[chartType] || '2d_scatter';
 }
 
-function createDataMapping(fields, dimension, is3D) {
+function createDataMapping(fields, chartType, is3D) {
     const mapping = {};
-
+    
     if (is3D) {
+        // 3D Surface 차트: x, y, z
         mapping.x = fields[0];
         mapping.y = fields[1];
         mapping.z = fields[2];
-        if (fields[3]) mapping.color = fields[3];
-    } else {
-        const axisNames = ['x', 'y', 'size', 'color'];
-        for (let i = 0; i < dimension; i++) {
-            mapping[axisNames[i]] = fields[i];
-        }
+        return mapping;
     }
-
+    
+    // 2D/3D/4D 차트별 매핑
+    switch (chartType) {
+        case '2d_scatter':
+            mapping.x = fields[0];
+            if (fields[1]) mapping.y = fields[1];
+            break;
+            
+        case '2d_size':
+            mapping.x = fields[0];
+            mapping.size = fields[1];
+            break;
+            
+        case '2d_color':
+            mapping.x = fields[0];
+            mapping.color = fields[1];
+            break;
+            
+        case '3d_scatter_size':
+            mapping.x = fields[0];
+            mapping.y = fields[1];
+            mapping.size = fields[2];
+            break;
+            
+        case '3d_scatter_color':
+            mapping.x = fields[0];
+            mapping.y = fields[1];
+            mapping.color = fields[2];
+            break;
+            
+        case '3d_size_color':
+            mapping.x = fields[0];
+            mapping.size = fields[1];
+            mapping.color = fields[2];
+            break;
+            
+        case '4d_scatter_size_color':
+            mapping.x = fields[0];
+            mapping.y = fields[1];
+            mapping.size = fields[2];
+            mapping.color = fields[3];
+            break;
+            
+        default:
+            // 기본: x축만 또는 x,y축
+            mapping.x = fields[0];
+            if (fields[1]) mapping.y = fields[1];
+            break;
+    }
+    
+    console.log('[VISUALIZATION] 데이터 매핑:', { chartType, fields, mapping });
     return mapping;
 }
 
