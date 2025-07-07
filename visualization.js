@@ -1,9 +1,14 @@
 // ============================================================================
-// visualization.js - 차트 시각화 페이지 로직
+// visualization.js - 차트 시각화 페이지 로직 (graph_complete.js 방식 완전 적용)
 // ============================================================================
 
 import { sessionStorageManager } from './shared/session_storage_manager/index.js';
 import { showError } from './shared/error_handler.js';
+
+// ✅ 현재 파일 구조에 맞는 data_pipeline 모듈들 import
+import { validateUserSelectionInput } from './data_pipeline_configuration_source/data_validator/index.js';
+import { calculateAvailableDimensionsFromData, getNumericFields, canSupport3D } from './data_pipeline_configuration_source/dimension_calculator/index.js';
+import { buildChartConfigForGeneration } from './data_pipeline_configuration_source/config_builder/index.js';
 
 // 3dim_chart_gen 통합 시스템 import
 import { generateChart } from './3dim_chart_gen/index.js';
@@ -48,7 +53,7 @@ function loadDataAndConfig() {
 }
 
 // ============================================================================
-// 차트 생성
+// ✅ graph_complete.js 방식을 완전히 복사한 차트 생성 함수
 // ============================================================================
 
 function createVisualization() {
@@ -57,8 +62,47 @@ function createVisualization() {
         return;
     }
 
+    // ✅ graph_complete.js와 동일한 변수 추출
+    const { chartType, selectedFields, dimension, is3D } = chartConfig;
+
+    console.log('[VISUALIZATION] 차트 생성 시작:', { chartType, selectedFields, dimension, is3D });
+
     try {
         updateChartInfo('차트 생성 중...', 'info');
+
+        // ✅ 1. graph_complete.js와 완전히 동일한 검증 과정
+        const validationResult = validateUserSelectionInput(
+            { dimension, chartType, selectedFields, is3D },
+            raw_data
+        );
+
+        if (!validationResult.isValid) {
+            showError(`입력 검증 오류: ${validationResult.errors.join(', ')}`);
+            return;
+        }
+
+        if (validationResult.warnings && validationResult.warnings.length > 0) {
+            console.warn('[VISUALIZATION] 검증 경고:', validationResult.warnings);
+        }
+
+        // ✅ 2. 스케일링 설정 (기본값)
+        const scalingConfig = chartConfig.scalingConfig || { type: 'default' };
+
+        // ✅ 3. graph_complete.js와 완전히 동일한 data_pipeline config 생성
+        const dataPhaseConfig = buildChartConfigForGeneration(
+            chartType,
+            selectedFields,
+            dimension,
+            {},
+            is3D
+        );
+
+        console.log('[VISUALIZATION] data_pipeline config 생성:', dataPhaseConfig);
+
+        // ✅ 4. graph_complete.js와 완전히 동일한 통합 시스템용 config 변환
+        const unifiedConfig = convertToUnifiedConfig(dataPhaseConfig, scalingConfig);
+
+        console.log('[VISUALIZATION] 통합 config 변환 완료:', unifiedConfig);
 
         // 기존 차트 정리
         if (currentChartWrapper) {
@@ -76,14 +120,12 @@ function createVisualization() {
         canvasWrapper.style.width = '100%';
         canvasWrapper.style.height = '600px';
 
-        // 3dim_chart_gen용 config 변환
-        const unifiedConfig = convertToUnifiedConfig(chartConfig);
-        console.log('[VISUALIZATION] 변환된 config:', unifiedConfig);
-
-        // 차트 생성 (3dim_chart_gen 사용)
+        // ✅ 5. graph_complete.js와 완전히 동일한 차트 생성
         currentChartWrapper = generateChart(raw_data, unifiedConfig, canvasWrapper);
 
-        // 이벤트 리스너 등록
+        console.log('[VISUALIZATION] 통합 시스템 차트 생성 완료');
+
+        // ✅ 6. graph_complete.js와 동일한 이벤트 리스너 등록
         currentChartWrapper.on('error', (error) => {
             console.error('[VISUALIZATION] 차트 에러:', error);
             showError('차트 오류: ' + error.message);
@@ -98,7 +140,8 @@ function createVisualization() {
             updateChartInfo(`⚠️ 성능상 ${info.total}개 데이터 중 ${info.displayed}개만 표시됩니다`, 'info');
         });
 
-        updateChartInfo(`✅ 차트 생성 완료: ${chartConfig.chartType} (${chartConfig.selectedFields.join(' → ')})`, 'success');
+        // ✅ 7. 성공 메시지 (기술적 차트 타입 표시)
+        updateChartInfo(`✅ 차트 생성 완료: ${unifiedConfig.type} (${selectedFields.join(' → ')})`, 'success');
 
     } catch (error) {
         console.error('[VISUALIZATION] 차트 생성 오류:', error);
@@ -107,114 +150,41 @@ function createVisualization() {
     }
 }
 
-// 3dim_chart_gen용 config 변환
-function convertToUnifiedConfig(chartConfig) {
-    const { chartType, selectedFields, dimension, is3D, scalingConfig } = chartConfig;
+// ============================================================================
+// ✅ graph_complete.js에서 복사한 config 변환 함수들 (완전 동일)
+// ============================================================================
 
-    // 차트 타입 매핑
-    const unifiedType = mapChartType(chartType, is3D, dimension);
-
-    // 데이터 매핑 생성
-    const dataMapping = createDataMapping(selectedFields, unifiedType, is3D);
-
+/**
+ * ✅ graph_complete.js와 완전히 동일한 변환 함수
+ */
+function convertToUnifiedConfig(dataPhaseConfig, scalingConfig) {
     return {
-        type: unifiedType,
-        dataMapping,
-        scalingConfig: scalingConfig || { type: 'default' },
+        type: mapChartType(dataPhaseConfig.type, dataPhaseConfig.is3D),
+        dataMapping: dataPhaseConfig.dataMapping,  // ← 핵심: 이미 올바르게 생성된 매핑 사용!
+        scalingConfig: scalingConfig,
         colorConfig: { type: 'blueRed' }
     };
 }
 
-function mapChartType(chartType, is3D, dimension) {
+/**
+ * ✅ graph_complete.js와 완전히 동일한 타입 매핑 함수
+ */
+function mapChartType(oldType, is3D) {
     if (is3D) {
-        return '3d_surface_scatter';
+        return '3d_surface_scatter'; // 모든 3D 타입은 통합
     }
 
-    // 2D 차트 타입 매핑
     const mapping = {
-        // 1차원
-        'line1d': '2d_scatter',
-        'category': '2d_scatter',
-
-        // 2차원
         'scatter': '2d_scatter',
         'size': '2d_size',
         'color': '2d_color',
-
-        // 3차원
         'scatter_size': '3d_scatter_size',
         'scatter_color': '3d_scatter_color',
         'size_color': '3d_size_color',
-
-        // 4차원
         'scatter_size_color': '4d_scatter_size_color'
     };
 
-    return mapping[chartType] || '2d_scatter';
-}
-
-function createDataMapping(fields, chartType, is3D) {
-    const mapping = {};
-
-    if (is3D) {
-        // 3D Surface 차트: x, y, z
-        mapping.x = fields[0];
-        mapping.y = fields[1];
-        mapping.z = fields[2];
-        return mapping;
-    }
-
-    // 2D/3D/4D 차트별 매핑
-    switch (chartType) {
-        case '2d_scatter':
-            mapping.x = fields[0];
-            if (fields[1]) mapping.y = fields[1];
-            break;
-
-        case '2d_size':
-            mapping.x = fields[0];
-            mapping.size = fields[1];
-            break;
-
-        case '2d_color':
-            mapping.x = fields[0];
-            mapping.color = fields[1];
-            break;
-
-        case '3d_scatter_size':
-            mapping.x = fields[0];
-            mapping.y = fields[1];
-            mapping.size = fields[2];
-            break;
-
-        case '3d_scatter_color':
-            mapping.x = fields[0];
-            mapping.y = fields[1];
-            mapping.color = fields[2];
-            break;
-
-        case '3d_size_color':
-            mapping.x = fields[0];
-            mapping.size = fields[1];
-            mapping.color = fields[2];
-            break;
-
-        case '4d_scatter_size_color':
-            mapping.x = fields[0];
-            mapping.y = fields[1];
-            mapping.size = fields[2];
-            mapping.color = fields[3];
-            break;
-
-        default:
-            // 기본: x축만 또는 x,y축
-            mapping.x = fields[0];
-            if (fields[1]) mapping.y = fields[1];
-            break;
-    }
-
-    console.log('[VISUALIZATION] 데이터 매핑:', { chartType, fields, mapping });
-    return mapping;
+    return mapping[oldType] || oldType;
 }
 
 // ============================================================================
@@ -230,45 +200,11 @@ function updateChartInfo(message, type = 'info') {
 }
 
 // ============================================================================
-// 네비게이션 함수들
-// ============================================================================
-
-function goBackToConfig() {
-    window.location.href = 'config.html';
-}
-
-function goBackToGenerator() {
-    // 모든 저장된 설정 정리
-    sessionStorage.removeItem('chartConfig');
-    window.location.href = 'index.html';
-}
-
-// ============================================================================
-// 페이지 초기화
+// 페이지 초기화 (불필요한 네비게이션 기능들 제거됨)
 // ============================================================================
 
 document.addEventListener('DOMContentLoaded', () => {
     console.log('[VISUALIZATION] 시각화 페이지 초기화');
-
-    // 이벤트 리스너 등록
-    const regenerateBtn = document.getElementById('regenerateBtn');
-    const goBackToConfigBtn = document.getElementById('goBackToConfigBtn');
-    const goBackToGeneratorBtn = document.getElementById('goBackToGeneratorBtn');
-
-    if (regenerateBtn) {
-        regenerateBtn.addEventListener('click', () => {
-            console.log('[VISUALIZATION] 차트 다시 생성');
-            createVisualization();
-        });
-    }
-
-    if (goBackToConfigBtn) {
-        goBackToConfigBtn.addEventListener('click', goBackToConfig);
-    }
-
-    if (goBackToGeneratorBtn) {
-        goBackToGeneratorBtn.addEventListener('click', goBackToGenerator);
-    }
 
     // 데이터 및 설정 로드
     loadDataAndConfig();
