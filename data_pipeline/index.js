@@ -18,10 +18,10 @@ export * as dataValidator from './data_validator/index.js';
 export * as dimensionCalculator from './dimension_calculator/index.js';
 
 // 차트 타입 제공
-export * as chartTypeProvider from './chart_type_provider/index.js';
+//export * as chartTypeProvider from './chart_type_provider/index.js';
 
 // 설정 빌더
 export * as configBuilder from './config_builder/index.js';
 
 // 컨테이너 생성
-export * as containerCreator from './container_creator/index.js';
+//export * as containerCreator from './container_creator/index.js';

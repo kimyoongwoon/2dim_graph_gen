@@ -1,83 +1,63 @@
-/* style.css - 통합 스타일시트 */
+:root {
+    --c-white: #fff;
+    --c-bg: #f5f5f5;
+    --c-light: #f8f9fa;
+    --c-border: #ddd;
+    --c-primary: #007bff;
+    --c-primary-hover: #0056b3;
+    --c-secondary: #6c757d;
+    --c-secondary-hover: #545b62;
+    --c-success: #28a745;
+    --c-warning-bg: #fff3cd;
+    --c-warning-border: #ffeaa7;
+    --c-error-bg: #f8d7da;
+    --c-error-border: #f5c6cb;
+    --c-text-dark: #333;
+    --c-text-light: #666;
+    --spacing: 15px;
+    --font-base: 14px;
+}
 
-/* ============================================================================
-   기본 스타일
-   ============================================================================ */
 body {
     margin: 0;
     padding: 20px;
     font-family: Arial, sans-serif;
-    background: #f5f5f5;
+    background: var(--c-bg);
+    color: var(--c-text-dark);
 }
 
-h1, h2 {
-    color: #333;
+h1, h2,
+.header h2, .section h4, .section h5, .section h6 {
+    color: var(--c-text-dark);
+    margin: 0 0 var(--spacing) 0;
 }
 
-/* ============================================================================
-   컨테이너 및 섹션
-   ============================================================================ */
-.container {
-    max-width: 1200px;
-    margin: 0 auto;
-    background: white;
-    padding: 20px;
-    border: 1px solid #ddd;
+/* 공통 컨테이너 스타일 */
+.container,
+.section,
+.controls,
+.config-column,
+.chart-container,
+.graph-card,
+.options-container,
+.data-preview,
+.metadata-display {
+    background: var(--c-white);
+    border: 1px solid var(--c-border);
+    padding: var(--spacing);
+    margin-bottom: var(--spacing);
 }
-
-.header {
-    text-align: center;
-    margin-bottom: 30px;
-    padding-bottom: 15px;
-    border-bottom: 1px solid #ccc;
-}
-
-    .header h2 {
-        color: #333;
-        font-size: 24px;
-        margin: 0;
-    }
-
-    .header p {
-        color: #666;
-        margin: 5px 0 0 0;
-    }
 
 .section {
-    background: #f8f9fa;
-    padding: 15px;
-    border: 1px solid #ddd;
-    margin-bottom: 15px;
+    background: var(--c-light);
 }
 
-    .section h4 {
-        color: #333;
-        font-size: 16px;
-        margin-top: 0;
-        margin-bottom: 15px;
-    }
-
-    .section h5 {
-        color: #333;
-        font-size: 14px;
-        margin-top: 0;
-        margin-bottom: 10px;
-    }
-
-    .section h6 {
-        color: #333;
-        font-size: 12px;
-        margin: 10px 0 5px 0;
-    }
-
-/* ============================================================================
-   필드 선택
-   ============================================================================ */
+/* 필드 선택 */
 .field-selection {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
-    margin: 15px 0;
+    gap: var(--spacing);
+    margin: var(--spacing) 0;
 }
 
 .field-checkbox {
@@ -85,8 +65,8 @@ h1, h2 {
     align-items: center;
     gap: 8px;
     padding: 8px;
-    background: white;
-    border: 1px solid #ddd;
+    background: var(--c-white);
+    border: 1px solid var(--c-border);
 }
 
     .field-checkbox input[type="checkbox"] {
@@ -99,40 +79,37 @@ h1, h2 {
     }
 
         .field-checkbox label strong {
-            color: #333;
+            color: var(--c-text-dark);
         }
 
         .field-checkbox label small {
-            color: #666;
+            color: var(--c-text-light);
         }
 
-/* ============================================================================
-   컨트롤 및 폼 요소
-   ============================================================================ */
+/* 컨트롤 */
 .controls {
     display: flex;
-    gap: 15px;
+    gap: var(--spacing);
     align-items: center;
     flex-wrap: wrap;
-    background: white;
-    padding: 10px;
-    border: 1px solid #ddd;
+    background: var(--c-white);
 }
 
     .controls label {
         font-weight: bold;
-        color: #333;
+        color: var(--c-text-dark);
     }
 
+/* 폼 요소 */
 select, input, button {
     padding: 6px 10px;
     border: 1px solid #ccc;
-    font-size: 14px;
+    font-size: var(--font-base);
+    background: var(--c-white);
 }
 
 select {
     min-width: 150px;
-    background: white;
 }
 
     select.field-selector {
@@ -144,52 +121,44 @@ input[type="number"] {
 }
 
 button {
-    background: #007bff;
-    color: white;
+    background: var(--c-primary);
+    color: #fff;
     cursor: pointer;
-    border: 1px solid #007bff;
+    border: 1px solid var(--c-primary);
     min-width: 120px;
 }
 
     button:hover {
-        background: #0056b3;
+        background: var(--c-primary-hover);
     }
 
     button:disabled {
-        background: #6c757d;
-        border-color: #6c757d;
+        background: var(--c-secondary);
+        border-color: var(--c-secondary);
         cursor: not-allowed;
     }
 
 .secondary-btn {
-    background: #6c757d;
-    border-color: #6c757d;
+    background: var(--c-secondary);
+    border-color: var(--c-secondary);
 }
 
     .secondary-btn:hover {
-        background: #545b62;
+        background: var(--c-secondary-hover);
     }
 
-/* ============================================================================
-   차트 설정
-   ============================================================================ */
+/* 차트 설정 */
 .chart-config {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 20px;
-    margin: 15px 0;
-}
-
-.config-column {
-    background: white;
-    padding: 15px;
-    border: 1px solid #ddd;
+    gap: var(--spacing);
+    margin: var(--spacing) 0;
 }
 
 .axis-mapping {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: var(--spacing);
 }
 
 .axis-selector {
@@ -201,26 +170,24 @@ button {
     .axis-selector label {
         min-width: 80px;
         font-weight: bold;
-        color: #333;
+        color: var(--c-text-dark);
         font-size: 12px;
         line-height: 1.3;
     }
 
     .axis-selector small {
-        color: #666;
+        color: var(--c-text-light);
         font-weight: normal;
     }
 
 .advanced-options {
-    background: #fff3cd;
-    padding: 15px;
-    margin-top: 15px;
-    border: 1px solid #ffeaa7;
+    background: var(--c-warning-bg);
+    padding: var(--spacing);
+    margin-top: var(--spacing);
+    border: 1px solid var(--c-warning-border);
 }
 
-/* ============================================================================
-   진행 단계 표시
-   ============================================================================ */
+/* 단계 표시 */
 .step-indicator {
     display: flex;
     justify-content: center;
@@ -232,32 +199,30 @@ button {
     max-width: 180px;
     text-align: center;
     padding: 10px 15px;
-    background: #e9ecef;
+    background: var(--c-light);
     margin: 0 5px;
-    color: #6c757d;
-    border: 1px solid #ddd;
+    color: var(--c-secondary);
+    border: 1px solid var(--c-border);
     font-size: 13px;
     font-weight: bold;
 }
 
     .step.active {
-        background: #007bff;
-        color: white;
-        border-color: #007bff;
+        background: var(--c-primary);
+        color: #fff;
+        border-color: var(--c-primary);
     }
 
     .step.completed {
-        background: #28a745;
-        color: white;
-        border-color: #28a745;
+        background: var(--c-success);
+        color: #fff;
+        border-color: var(--c-success);
     }
 
-/* ============================================================================
-   상태 및 메시지
-   ============================================================================ */
+/* 상태 메시지 */
 .status {
     padding: 10px 15px;
-    margin: 15px 0;
+    margin: var(--spacing) 0;
     border: 1px solid;
     font-weight: bold;
 }
@@ -275,25 +240,28 @@ button {
     }
 
     .status.error {
-        background: #f8d7da;
+        background: var(--c-error-bg);
         color: #721c24;
-        border-color: #f5c6cb;
+        border-color: var(--c-error-border);
     }
 
-.error-display {
-    background: #f8d7da;
-    color: #721c24;
+.error-display, .data-info {
     padding: 10px;
-    margin: 10px 0;
-    border: 1px solid #f5c6cb;
+    margin: var(--spacing) 0;
+    border: 1px solid;
     font-weight: bold;
+}
+
+.error-display {
+    background: var(--c-error-bg);
+    color: #721c24;
+    border-color: var(--c-error-border);
 }
 
 .data-info {
     background: #e3f2fd;
-    padding: 10px;
-    margin: 15px 0;
-    border: 1px solid #2196f3;
+    color: var(--c-text-dark);
+    border-color: #2196f3;
     font-size: 14px;
 }
 
@@ -304,42 +272,17 @@ button {
     }
 
     .data-info.error {
-        background: #f8d7da;
-        border-color: #f5c6cb;
+        background: var(--c-error-bg);
+        border-color: var(--c-error-border);
         color: #721c24;
     }
 
-/* ============================================================================
-   차트 및 데이터 표시
-   ============================================================================ */
-.chart-container {
-    margin: 20px 0;
-    background: white;
-    padding: 20px;
-    border: 1px solid #ddd;
-}
-
-    .chart-container h3 {
-        color: #333;
-        text-align: center;
-        margin-bottom: 20px;
-        font-size: 18px;
-    }
-
-.chart-info {
-    background: #f8f9fa;
-    padding: 10px;
-    margin-bottom: 15px;
-    border: 1px solid #ddd;
-    font-size: 12px;
-    color: #333;
-}
-
-.data-preview {
-    max-height: 250px;
-    overflow: auto;
-    border: 1px solid #ddd;
-    background: white;
+/* 차트 및 테이블 */
+.chart-container h3 {
+    color: var(--c-text-dark);
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 18px;
 }
 
 table {
@@ -351,15 +294,15 @@ table {
 th, td {
     padding: 8px;
     text-align: left;
-    border-bottom: 1px solid #ddd;
+    border-bottom: 1px solid var(--c-border);
 }
 
 th {
-    background: #f8f9fa;
+    background: var(--c-light);
     position: sticky;
     top: 0;
     font-weight: bold;
-    color: #333;
+    color: var(--c-text-dark);
 }
 
 tr:nth-child(even) {
@@ -367,51 +310,40 @@ tr:nth-child(even) {
 }
 
 .metadata-display {
-    background: #f8f9fa;
-    padding: 15px;
-    margin: 15px 0;
     font-family: 'Courier New', monospace;
     font-size: 11px;
     white-space: pre-wrap;
     max-height: 200px;
     overflow: auto;
-    border: 1px solid #ddd;
 }
 
-/* ============================================================================
-   기존 GitHub 코드 호환성 (원본 유지)
-   ============================================================================ */
-
-/* 에러 및 정보 메시지 스타일 */
-.error {
-    color: #721c24;
-    background-color: #f8d7da;
-    border: 1px solid #f5c6cb;
+/* 간략화된 메시지 스타일 */
+.error, .warning, .info {
     padding: 15px;
     border-radius: 4px;
     margin: 10px 0;
     font-weight: bold;
 }
 
+.error {
+    color: #721c24;
+    background: var(--c-error-bg);
+    border: 1px solid var(--c-error-border);
+}
+
 .warning {
     color: #856404;
-    background-color: #fff3cd;
-    border: 1px solid #ffeaa7;
-    padding: 15px;
-    border-radius: 4px;
-    margin: 10px 0;
+    background: var(--c-warning-bg);
+    border: 1px solid var(--c-warning-border);
 }
 
 .info {
     color: #055160;
-    background-color: #d1ecf1;
+    background: #d1ecf1;
     border: 1px solid #bee5eb;
-    padding: 15px;
-    border-radius: 4px;
-    margin: 10px 0;
 }
 
-/* Dimension Selector Styles */
+/* 셀렉터 스타일 */
 .selector-container {
     display: flex;
     flex-direction: column;
@@ -431,7 +363,7 @@ tr:nth-child(even) {
 
 #dimension-select {
     padding: 4px 6px;
-    border: 1px solid #ddd;
+    border: 1px solid var(--c-border);
     border-radius: 4px;
     font-size: 7px;
     min-width: 100px;
@@ -453,28 +385,28 @@ tr:nth-child(even) {
 
     .axis-selector-item label {
         font-size: 6px;
-        color: #666;
+        color: var(--c-text-light);
         font-weight: bold;
     }
 
 .axis-select {
     padding: 3px 5px;
-    border: 1px solid #ddd;
+    border: 1px solid var(--c-border);
     border-radius: 4px;
     font-size: 7px;
     min-width: 60px;
 }
 
-    /* 비활성화된 옵션 스타일 */
     .axis-select option:disabled {
         color: #999;
         font-style: italic;
     }
 
+/* 버튼 */
 .primary-btn {
     padding: 5px 10px;
-    background: #007bff;
-    color: white;
+    background: var(--c-primary);
+    color: #fff;
     border: none;
     border-radius: 4px;
     cursor: pointer;
@@ -485,7 +417,7 @@ tr:nth-child(even) {
 }
 
     .primary-btn:hover:not(:disabled) {
-        background: #0056b3;
+        background: var(--c-primary-hover);
     }
 
     .primary-btn:disabled {
@@ -493,7 +425,7 @@ tr:nth-child(even) {
         cursor: not-allowed;
     }
 
-/* Graph Container Styles */
+/* 그래프 카드 */
 .graphs-container {
     display: flex;
     flex-wrap: wrap;
@@ -502,17 +434,15 @@ tr:nth-child(even) {
 }
 
 .graph-card {
-    background: white;
+    background: var(--c-white);
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     padding: 8px;
     width: calc(33.333% - 7px);
-    box-sizing: border-box;
     position: relative;
     min-height: 400px;
 }
 
-    /* 그래프가 없을 때 메시지 스타일 */
     .graph-card .chart-container .error {
         display: flex;
         align-items: center;
@@ -522,7 +452,13 @@ tr:nth-child(even) {
         font-size: 14px;
     }
 
-/* Delete button */
+    .graph-card h3 {
+        margin: 0 0 5px 0;
+        padding-right: 30px;
+        font-size: 8px;
+        color: #555;
+    }
+
 .delete-btn {
     position: absolute;
     top: 5px;
@@ -531,7 +467,7 @@ tr:nth-child(even) {
     height: 12px;
     border: none;
     background: #dc3545;
-    color: white;
+    color: #fff;
     border-radius: 4px;
     cursor: pointer;
     display: flex;
@@ -548,25 +484,7 @@ tr:nth-child(even) {
         background: #c82333;
     }
 
-.graph-card h3 {
-    margin-top: 0;
-    margin-bottom: 5px;
-    padding-right: 30px; /* Space for delete button */
-    font-size: 8px;
-    color: #555;
-}
-
-/* Larger chart area */
-.chart-container {
-    margin: 10px 0;
-}
-
-    .chart-container canvas {
-        width: 100%;
-        height: 300px;
-    }
-
-/* Visualization type buttons */
+/* 시각화 버튼 */
 .viz-buttons {
     display: flex;
     flex-wrap: wrap;
@@ -576,7 +494,7 @@ tr:nth-child(even) {
 
 .viz-button {
     padding: 4px 8px;
-    border: 1px solid #ddd;
+    border: 1px solid var(--c-border);
     border-radius: 4px;
     background: #fafafa;
     font-size: 7px;
@@ -585,52 +503,40 @@ tr:nth-child(even) {
 }
 
     .viz-button:hover {
-        background: #e9ecef;
+        background: var(--c-light);
     }
 
     .viz-button.active {
-        background: #007bff;
-        color: white;
+        background: var(--c-primary);
+        color: #fff;
     }
 
-/* 옵션 섹션 스타일 */
-.options-container {
-    margin: 10px 0;
-    padding: 8px;
-    background: #f8f9fa;
-    border-radius: 4px;
-    border: 1px solid #e9ecef;
+/* 옵션 섹션 */
+.option-section h4 {
+    margin: 0 0 8px 0;
+    font-size: 12px;
+    color: #495057;
 }
 
-.option-section {
-    margin-bottom: 10px;
-}
-
-    .option-section h4 {
-        margin: 0 0 8px 0;
-        font-size: 12px;
-        color: #495057;
-    }
-
-/* 데이터셋 정보 스타일 */
+/* 데이터셋 정보 */
 .dataset-info {
     font-size: 10px;
-    color: #666;
-    background: #f8f9fa;
+    color: var(--c-text-light);
+    background: var(--c-light);
     padding: 8px;
     border-radius: 4px;
     margin-top: 10px;
-    border-left: 3px solid #007bff;
+    border-left: 3px solid var(--c-primary);
 }
 
-/* 로딩 상태 스타일 */
+/* 로딩 */
 .loading {
     display: flex;
     align-items: center;
     justify-content: center;
     height: 300px;
     font-size: 14px;
-    color: #666;
+    color: var(--c-text-light);
 }
 
     .loading::before {
@@ -649,9 +555,7 @@ tr:nth-child(even) {
     }
 }
 
-/* ============================================================================
-   반응형 디자인
-   ============================================================================ */
+/* 반응형 */
 @media (max-width: 1200px) {
     .graph-card {
         width: calc(50% - 5px);

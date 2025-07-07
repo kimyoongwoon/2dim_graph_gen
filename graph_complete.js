@@ -6,9 +6,9 @@ import {
     sessionStorageManager,
     dataValidator,
     dimensionCalculator,
-    chartTypeProvider,
+    //chartTypeProvider,
     configBuilder,
-    containerCreator
+    //containerCreator
 } from './data_pipeline/index.js';
 
 import { showError, clearAllChartData } from './shared/error_handler.js';
