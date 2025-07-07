@@ -467,3 +467,81 @@ export function createPlotlyConfig(options = {}) {
     console.log('[PLOTLY_HELPERS] 설정 생성 완료');
     return config;
 }
+
+
+
+
+// 2D 차트 함수들 import
+import { create2DScatter } from '../charts/2dim/2d_scatter.js';
+import { create2DSize } from '../charts/2dim/2d_size.js';
+import { create2DColor } from '../charts/2dim/2d_color.js';
+
+// 3D 차트 함수들 import
+import { create3DScatterColor } from '../charts/3dim/3d_scatter_color.js';
+import { create3DScatterSize } from '../charts/3dim/3d_scatter_size.js';
+import { create3DSizeColor } from '../charts/3dim/3d_size_color.js';
+import { create3DSurfaceScatter } from '../charts/3dim/3d_surface_scatter.js';
+
+// 4D 차트 함수들 import
+import { create4DScatterSizeColor } from '../charts/4dim/4d_scatter_size_color.js';
+
+/**
+ * 🔥 필터링된 데이터를 Plotly traces로 변환 (모든 차트 타입 지원)
+ * @param {Array} dataPoints - 필터링된 데이터 포인트들
+ * @param {Object} config - 차트 설정 (dataMapping, type, scalingConfig, colorConfig 포함)
+ * @returns {Array} Plotly traces 배열
+ */
+export function convertDataToTraces(dataPoints, config) {
+    console.log('[PLOTLY_HELPERS] 데이터를 Plotly traces로 변환:', config.type);
+
+    try {
+        // 최소 dataset 구조 생성
+        const dataset = {
+            axes: Object.entries(config.dataMapping).map(([role, fieldName]) => ({
+                name: fieldName,
+                role: role
+            }))
+        };
+
+        // 기존 차트 생성 함수 재사용
+        const chartConfig = createChartConfigForType(dataPoints, dataset, config);
+
+        console.log('[PLOTLY_HELPERS] Traces 변환 완료:', chartConfig.data.length, '개 trace');
+        return chartConfig.data;
+    } catch (error) {
+        console.error('[PLOTLY_HELPERS] Traces 변환 실패:', error);
+        // 빈 trace 반환
+        return [createEmptyTrace(config.dimension || 2)];
+    }
+}
+
+/**
+ * 차트 타입별 설정 생성 (기존 chart creation 함수들 재사용)
+ * @param {Array} data - 데이터 포인트들
+ * @param {Object} dataset - 축 정보
+ * @param {Object} config - 차트 설정
+ * @returns {Object} 차트 설정 객체
+ */
+function createChartConfigForType(data, dataset, config) {
+    // 필요한 차트 생성 함수들 동적 import (실제 경로에 맞게 수정)
+    switch (config.type) {
+        case '2d_scatter':
+            return create2DScatter(data, dataset, {});
+        case '2d_size':
+            return create2DSize(data, dataset, config.scalingConfig || {});
+        case '2d_color':
+            return create2DColor(data, dataset, config.colorConfig || {});
+        case '3d_scatter_color':
+            return create3DScatterColor(data, dataset, config.colorConfig || {});
+        case '3d_scatter_size':
+            return create3DScatterSize(data, dataset, config.scalingConfig || {});
+        case '3d_size_color':
+            return create3DSizeColor(data, dataset, config.scalingConfig || {}, config.colorConfig || {});
+        case '3d_surface_scatter':
+            return create3DSurfaceScatter(data, dataset, {});
+        case '4d_scatter_size_color':
+            return create4DScatterSizeColor(data, dataset, config.scalingConfig || {}, config.colorConfig || {});
+        default:
+            throw new Error(`Unknown chart type: ${config.type}`);
+    }
+}

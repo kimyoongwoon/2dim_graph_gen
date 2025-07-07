@@ -6,6 +6,8 @@
  * Plotly 차트를 감싸는 통합 래퍼 클래스 (2D/3D/4D 지원)
  * 🔥 경량화: ResizeManager 제거, Plotly responsive만 사용
  */
+import { convertDataToTraces } from '../utils/plotly_helpers.js';
+
 export class ChartWrapper {
     constructor(plotlyDiv, containerElement, config, chartData) {
         this.plotlyDiv = plotlyDiv;           // Plotly div 엘리먼트
@@ -106,7 +108,9 @@ export class ChartWrapper {
             // Plotly 차트 업데이트
             if (window.Plotly && this.plotlyDiv) {
                 // 새 데이터로 차트 재생성 (react 사용)
-                window.Plotly.react(this.plotlyDiv, processedData);
+                // Convert data points back to Plotly traces
+                const updatedTraces = convertDataToTraces(processedData, this.config);
+                window.Plotly.react(this.plotlyDiv, updatedTraces, this.plotlyDiv.layout, this.plotlyDiv.config);
 
                 this.chartData = processedData;
                 this.emit('dataUpdated', processedData);
@@ -359,6 +363,12 @@ export class ChartWrapperEnhanced extends ChartWrapper {
             if (e.code === 'Space' && !isSpacePressed && e.target.tagName !== 'INPUT' && e.target.tagName !== 'SELECT') {
                 isSpacePressed = true;
 
+                // Prevent button from being focused/activated
+                const createChartBtn = document.getElementById('createChartBtn');
+                if (createChartBtn) {
+                    createChartBtn.blur(); // Remove focus
+                }
+
                 // 🔥 Plotly 인터랙션 비활성화
                 this.disablePlotlyInteractions();
 
@@ -475,7 +485,7 @@ export class ChartWrapperEnhanced extends ChartWrapper {
                 showTips: layout.showTips !== false
             };
 
-            console.log('[CHART_WRAPPER_ENHANCED] Plotly 원본 설정 저장:', this.originalPlotlyConfig);
+            console.log('[CHART_WRAPPER_ENHANCED] Plotly 원본 설정 저장:', JSON.stringify(this.originalPlotlyConfig, null, 2));
 
         } catch (error) {
             console.warn('[CHART_WRAPPER_ENHANCED] 원본 설정 저장 실패:', error);
@@ -517,6 +527,11 @@ export class ChartWrapperEnhanced extends ChartWrapper {
      * 🔥 Plotly 인터랙션 복구 (스페이스 키 뗄 때)
      */
     restorePlotlyInteractions() {
+        console.log('=== RESTORE CONFIG DEBUG ===');
+        console.log('About to restore:', this.originalPlotlyConfig);
+        console.log('Current layout before restore:', this.plotlyDiv.layout?.dragmode);
+        console.log('Current _fullLayout before restore:', this.plotlyDiv._fullLayout?.dragmode);
+
         if (!this.plotlyDiv || !window.Plotly || !this.originalPlotlyConfig) return;
 
         try {

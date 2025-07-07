@@ -596,6 +596,7 @@ function createResetFiltersButton(chartWrapper) {
  * @param {Object} chartWrapper - 차트 래퍼 객체
  */
 function applyDataFilters(chartWrapper) {
+    console.log('🚨🚨🚨 applyDataFilters CALLED - MIGHT REGENERATE CHART!');
     if (!chartWrapper || !chartWrapper._originalData) {
         console.warn('[UI_CONTROLS] chartWrapper 또는 원본 데이터가 없습니다');
         return;
@@ -734,6 +735,7 @@ function collectFilterConditions() {
  * @param {Object} chartWrapper - 차트 래퍼 객체
  */
 function applyRangeFilter(chartWrapper) {
+    console.log('🚨🚨🚨 applyRangeFilter CALLED - MIGHT REGENERATE CHART!');
     if (!chartWrapper || !chartWrapper._originalData) {
         console.warn('[UI_CONTROLS] chartWrapper 또는 원본 데이터가 없습니다');
         return;
