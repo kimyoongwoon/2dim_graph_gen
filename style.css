@@ -1,113 +1,157 @@
-/* ============================================================================
-   style.css (경량화) - 핵심 스타일만 유지
-   ============================================================================ */
+/* style.css - 통합 스타일시트 */
 
-/* 기본 스타일 */
+/* ============================================================================
+   기본 스타일
+   ============================================================================ */
 body {
     margin: 0;
     padding: 20px;
     font-family: Arial, sans-serif;
     background: #f5f5f5;
-    line-height: 1.6;
 }
 
-h1, h2, h3 {
+h1, h2 {
     color: #333;
-    margin: 0 0 15px 0;
 }
 
-/* 메인 컨테이너 */
+/* ============================================================================
+   컨테이너 및 섹션
+   ============================================================================ */
 .container {
     max-width: 1200px;
     margin: 0 auto;
     background: white;
     padding: 20px;
     border: 1px solid #ddd;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
-/* 헤더 */
 .header {
     text-align: center;
     margin-bottom: 30px;
     padding-bottom: 15px;
-    border-bottom: 2px solid #007bff;
+    border-bottom: 1px solid #ccc;
 }
 
     .header h2 {
-        color: #007bff;
-        font-size: 28px;
+        color: #333;
+        font-size: 24px;
         margin: 0;
     }
 
     .header p {
         color: #666;
-        margin: 10px 0 0 0;
-        font-size: 16px;
+        margin: 5px 0 0 0;
     }
 
-/* 섹션 */
 .section {
     background: #f8f9fa;
-    padding: 20px;
+    padding: 15px;
     border: 1px solid #ddd;
-    border-radius: 6px;
-    margin-bottom: 20px;
+    margin-bottom: 15px;
 }
 
     .section h4 {
         color: #333;
-        font-size: 18px;
-        margin: 0 0 15px 0;
-        border-bottom: 1px solid #ddd;
-        padding-bottom: 8px;
+        font-size: 16px;
+        margin-top: 0;
+        margin-bottom: 15px;
     }
 
-/* 폼 요소들 */
-.form-group {
-    margin-bottom: 20px;
+    .section h5 {
+        color: #333;
+        font-size: 14px;
+        margin-top: 0;
+        margin-bottom: 10px;
+    }
+
+    .section h6 {
+        color: #333;
+        font-size: 12px;
+        margin: 10px 0 5px 0;
+    }
+
+/* ============================================================================
+   필드 선택
+   ============================================================================ */
+.field-selection {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin: 15px 0;
 }
 
-    .form-group label {
-        display: block;
+.field-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px;
+    background: white;
+    border: 1px solid #ddd;
+}
+
+    .field-checkbox input[type="checkbox"] {
+        margin: 0;
+    }
+
+    .field-checkbox label {
+        font-size: 13px;
+        line-height: 1.3;
+    }
+
+        .field-checkbox label strong {
+            color: #333;
+        }
+
+        .field-checkbox label small {
+            color: #666;
+        }
+
+/* ============================================================================
+   컨트롤 및 폼 요소
+   ============================================================================ */
+.controls {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    flex-wrap: wrap;
+    background: white;
+    padding: 10px;
+    border: 1px solid #ddd;
+}
+
+    .controls label {
         font-weight: bold;
         color: #333;
-        margin-bottom: 8px;
     }
 
-textarea, select, input, button {
-    padding: 10px;
+select, input, button {
+    padding: 6px 10px;
     border: 1px solid #ccc;
-    border-radius: 4px;
     font-size: 14px;
-    font-family: inherit;
 }
 
-textarea {
-    width: 100%;
-    min-height: 200px;
-    resize: vertical;
-    font-family: 'Courier New', monospace;
-    background: #f8f8f8;
-    box-sizing: border-box;
-}
-
-select, input {
+select {
     min-width: 150px;
+    background: white;
 }
 
-/* 버튼 스타일 */
+    select.field-selector {
+        min-width: 180px;
+    }
+
+input[type="number"] {
+    width: 80px;
+}
+
 button {
     background: #007bff;
     color: white;
     cursor: pointer;
     border: 1px solid #007bff;
     min-width: 120px;
-    transition: background-color 0.2s;
 }
 
-    button:hover:not(:disabled) {
+    button:hover {
         background: #0056b3;
     }
 
@@ -126,308 +170,466 @@ button {
         background: #545b62;
     }
 
-/* 드롭다운 스타일링 */
-select {
-    width: 100%;
-    max-width: 500px;
-    background: white;
-    cursor: pointer;
+/* ============================================================================
+   차트 설정
+   ============================================================================ */
+.chart-config {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin: 15px 0;
 }
 
-    select optgroup {
-        font-weight: bold;
-        color: #333;
-        background: #f8f9fa;
-    }
-
-    select option {
-        padding: 8px;
-        font-weight: normal;
-    }
-
-/* 매핑 필드들 */
-.mapping-fields {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 15px;
-    margin-top: 10px;
+.config-column {
+    background: white;
     padding: 15px;
-    background: #f8f9fa;
-    border-radius: 6px;
     border: 1px solid #ddd;
 }
 
-.mapping-field {
+.axis-mapping {
     display: flex;
     flex-direction: column;
-    gap: 5px;
-}
-
-    .mapping-field label {
-        font-weight: bold;
-        color: #333;
-        font-size: 13px;
-    }
-
-    .mapping-field .field-description {
-        font-size: 11px;
-        color: #666;
-        font-style: italic;
-    }
-
-    .mapping-field select {
-        max-width: none;
-        width: 100%;
-    }
-
-/* 파라미터 입력 필드들 */
-.param-fields {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     gap: 10px;
-    padding: 10px;
-    background: #fff3cd;
-    border: 1px solid #ffeaa7;
-    border-radius: 4px;
 }
 
-.param-field {
+.axis-selector {
     display: flex;
-    flex-direction: column;
-    gap: 3px;
-}
-
-    .param-field label {
-        font-size: 12px;
-        color: #856404;
-        font-weight: bold;
-    }
-
-    .param-field input {
-        min-width: auto;
-        width: 100%;
-    }
-
-/* 컨트롤 영역 */
-.controls {
-    display: flex;
-    gap: 15px;
     align-items: center;
-    flex-wrap: wrap;
-    margin: 20px 0;
+    gap: 10px;
 }
 
-    .controls label {
+    .axis-selector label {
+        min-width: 80px;
         font-weight: bold;
         color: #333;
+        font-size: 12px;
+        line-height: 1.3;
     }
 
-/* 상태 및 메시지 */
-.status, .data-info {
+    .axis-selector small {
+        color: #666;
+        font-weight: normal;
+    }
+
+.advanced-options {
+    background: #fff3cd;
     padding: 15px;
-    margin: 15px 0;
-    border: 1px solid;
-    border-radius: 4px;
+    margin-top: 15px;
+    border: 1px solid #ffeaa7;
+}
+
+/* ============================================================================
+   진행 단계 표시
+   ============================================================================ */
+.step-indicator {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 30px;
+}
+
+.step {
+    flex: 1;
+    max-width: 180px;
+    text-align: center;
+    padding: 10px 15px;
+    background: #e9ecef;
+    margin: 0 5px;
+    color: #6c757d;
+    border: 1px solid #ddd;
+    font-size: 13px;
     font-weight: bold;
 }
 
-    .status.info, .data-info {
+    .step.active {
+        background: #007bff;
+        color: white;
+        border-color: #007bff;
+    }
+
+    .step.completed {
+        background: #28a745;
+        color: white;
+        border-color: #28a745;
+    }
+
+/* ============================================================================
+   상태 및 메시지
+   ============================================================================ */
+.status {
+    padding: 10px 15px;
+    margin: 15px 0;
+    border: 1px solid;
+    font-weight: bold;
+}
+
+    .status.info {
         background: #d1ecf1;
         color: #0c5460;
         border-color: #bee5eb;
     }
 
-        .status.success, .data-info.success {
-            background: #d4edda;
-            color: #155724;
-            border-color: #c3e6cb;
-        }
-
-        .status.error, .data-info.error {
-            background: #f8d7da;
-            color: #721c24;
-            border-color: #f5c6cb;
-        }
-
-/* 에러 표시 */
-.error-display {
-    background: #f8d7da;
-    color: #721c24;
-    padding: 15px;
-    margin: 15px 0;
-    border: 1px solid #f5c6cb;
-    border-radius: 4px;
-    font-weight: bold;
-    display: none;
-}
-
-/* 검증 결과 */
-.validation-result {
-    background: #fff3cd;
-    color: #856404;
-    padding: 15px;
-    margin: 15px 0;
-    border: 1px solid #ffeaa7;
-    border-radius: 4px;
-    white-space: pre-wrap;
-    font-family: 'Courier New', monospace;
-    font-size: 13px;
-}
-
-    .validation-result.valid {
+    .status.success {
         background: #d4edda;
         color: #155724;
         border-color: #c3e6cb;
     }
 
-    .validation-result.invalid {
+    .status.error {
         background: #f8d7da;
         color: #721c24;
         border-color: #f5c6cb;
     }
 
-/* 차트 컨테이너 */
+.error-display {
+    background: #f8d7da;
+    color: #721c24;
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #f5c6cb;
+    font-weight: bold;
+}
+
+.data-info {
+    background: #e3f2fd;
+    padding: 10px;
+    margin: 15px 0;
+    border: 1px solid #2196f3;
+    font-size: 14px;
+}
+
+    .data-info.success {
+        background: #d4edda;
+        border-color: #c3e6cb;
+        color: #155724;
+    }
+
+    .data-info.error {
+        background: #f8d7da;
+        border-color: #f5c6cb;
+        color: #721c24;
+    }
+
+/* ============================================================================
+   차트 및 데이터 표시
+   ============================================================================ */
 .chart-container {
     margin: 20px 0;
     background: white;
     padding: 20px;
     border: 1px solid #ddd;
-    border-radius: 6px;
-    display: none;
-    min-height: 400px;
 }
 
     .chart-container h3 {
         color: #333;
         text-align: center;
         margin-bottom: 20px;
-        font-size: 20px;
+        font-size: 18px;
     }
 
 .chart-info {
-    background: #e3f2fd;
+    background: #f8f9fa;
     padding: 10px;
     margin-bottom: 15px;
-    border: 1px solid #2196f3;
-    border-radius: 4px;
-    font-size: 13px;
+    border: 1px solid #ddd;
+    font-size: 12px;
     color: #333;
 }
 
-.chart-canvas-wrapper {
-    position: relative;
+.data-preview {
+    max-height: 250px;
+    overflow: auto;
+    border: 1px solid #ddd;
+    background: white;
+}
+
+table {
     width: 100%;
-    height: 500px;
+    border-collapse: collapse;
+    font-size: 12px;
+}
+
+th, td {
+    padding: 8px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+th {
+    background: #f8f9fa;
+    position: sticky;
+    top: 0;
+    font-weight: bold;
+    color: #333;
+}
+
+tr:nth-child(even) {
+    background: #f9f9f9;
+}
+
+.metadata-display {
+    background: #f8f9fa;
+    padding: 15px;
+    margin: 15px 0;
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    white-space: pre-wrap;
+    max-height: 200px;
+    overflow: auto;
+    border: 1px solid #ddd;
+}
+
+/* ============================================================================
+   기존 GitHub 코드 호환성 (원본 유지)
+   ============================================================================ */
+
+/* 에러 및 정보 메시지 스타일 */
+.error {
+    color: #721c24;
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    padding: 15px;
+    border-radius: 4px;
+    margin: 10px 0;
+    font-weight: bold;
+}
+
+.warning {
+    color: #856404;
+    background-color: #fff3cd;
+    border: 1px solid #ffeaa7;
+    padding: 15px;
+    border-radius: 4px;
+    margin: 10px 0;
+}
+
+.info {
+    color: #055160;
+    background-color: #d1ecf1;
+    border: 1px solid #bee5eb;
+    padding: 15px;
+    border-radius: 4px;
+    margin: 10px 0;
+}
+
+/* Dimension Selector Styles */
+.selector-container {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.dimension-select-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+    .dimension-select-wrapper label {
+        font-weight: bold;
+        min-width: 100px;
+    }
+
+#dimension-select {
+    padding: 4px 6px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 7px;
+    min-width: 100px;
+}
+
+.axis-selectors {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+    align-items: center;
+    min-height: 20px;
+}
+
+.axis-selector-item {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+    .axis-selector-item label {
+        font-size: 6px;
+        color: #666;
+        font-weight: bold;
+    }
+
+.axis-select {
+    padding: 3px 5px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 7px;
+    min-width: 60px;
+}
+
+    /* 비활성화된 옵션 스타일 */
+    .axis-select option:disabled {
+        color: #999;
+        font-style: italic;
+    }
+
+.primary-btn {
+    padding: 5px 10px;
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 7px;
+    font-weight: bold;
+    align-self: flex-start;
+    transition: background-color 0.2s;
+}
+
+    .primary-btn:hover:not(:disabled) {
+        background: #0056b3;
+    }
+
+    .primary-btn:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+    }
+
+/* Graph Container Styles */
+.graphs-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.graph-card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    padding: 8px;
+    width: calc(33.333% - 7px);
+    box-sizing: border-box;
+    position: relative;
     min-height: 400px;
 }
 
-/* 진행 단계 표시 */
-.progress-steps {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin: 15px 0;
-    position: relative;
-}
-
-    .progress-steps::before {
-        content: '';
-        position: absolute;
-        top: 20px;
-        left: 25px;
-        right: 25px;
-        height: 2px;
-        background: #e9ecef;
-        z-index: 1;
+    /* 그래프가 없을 때 메시지 스타일 */
+    .graph-card .chart-container .error {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 300px;
+        margin: 0;
+        font-size: 14px;
     }
 
-.step-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-    position: relative;
-    z-index: 2;
-    min-width: 80px;
-}
-
-.step-number {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: #e9ecef;
-    color: #6c757d;
+/* Delete button */
+.delete-btn {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 12px;
+    height: 12px;
+    border: none;
+    background: #dc3545;
+    color: white;
+    border-radius: 4px;
+    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: bold;
-    font-size: 14px;
-    transition: all 0.3s;
+    font-size: 8px;
+    line-height: 1;
+    padding: 0;
+    transition: background-color 0.2s;
+    z-index: 10;
 }
 
-.step-text {
-    font-size: 12px;
-    color: #6c757d;
-    text-align: center;
-    font-weight: 500;
-    transition: color 0.3s;
-}
-
-.step-item.active .step-number {
-    background: #007bff;
-    color: white;
-}
-
-.step-item.active .step-text {
-    color: #007bff;
-    font-weight: bold;
-}
-
-.step-item.completed .step-number {
-    background: #28a745;
-    color: white;
-}
-
-.step-item.completed .step-text {
-    color: #28a745;
-}
-
-.step-item.completed .step-number::after {
-    content: '✓';
-    font-size: 12px;
-}
-
-@media (max-width: 768px) {
-    .container {
-        padding: 15px;
-        margin: 10px;
+    .delete-btn:hover {
+        background: #c82333;
     }
 
-    .controls {
-        flex-direction: column;
-        align-items: stretch;
+.graph-card h3 {
+    margin-top: 0;
+    margin-bottom: 5px;
+    padding-right: 30px; /* Space for delete button */
+    font-size: 8px;
+    color: #555;
+}
+
+/* Larger chart area */
+.chart-container {
+    margin: 10px 0;
+}
+
+    .chart-container canvas {
+        width: 100%;
+        height: 300px;
     }
 
-    .quick-configs {
-        justify-content: center;
+/* Visualization type buttons */
+.viz-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-bottom: 5px;
+}
+
+.viz-button {
+    padding: 4px 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: #fafafa;
+    font-size: 7px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+    .viz-button:hover {
+        background: #e9ecef;
     }
 
-    textarea {
+    .viz-button.active {
+        background: #007bff;
+        color: white;
+    }
+
+/* 옵션 섹션 스타일 */
+.options-container {
+    margin: 10px 0;
+    padding: 8px;
+    background: #f8f9fa;
+    border-radius: 4px;
+    border: 1px solid #e9ecef;
+}
+
+.option-section {
+    margin-bottom: 10px;
+}
+
+    .option-section h4 {
+        margin: 0 0 8px 0;
         font-size: 12px;
+        color: #495057;
     }
 
-    .chart-canvas-wrapper {
-        height: 400px;
-    }
+/* 데이터셋 정보 스타일 */
+.dataset-info {
+    font-size: 10px;
+    color: #666;
+    background: #f8f9fa;
+    padding: 8px;
+    border-radius: 4px;
+    margin-top: 10px;
+    border-left: 3px solid #007bff;
 }
 
-/* 로딩 상태 */
+/* 로딩 상태 스타일 */
 .loading {
     display: flex;
     align-items: center;
     justify-content: center;
-    height: 200px;
-    font-size: 16px;
+    height: 300px;
+    font-size: 14px;
     color: #666;
 }
 
@@ -447,32 +649,55 @@ select {
     }
 }
 
-/* 유틸리티 클래스 */
-.text-center {
-    text-align: center;
+/* ============================================================================
+   반응형 디자인
+   ============================================================================ */
+@media (max-width: 1200px) {
+    .graph-card {
+        width: calc(50% - 5px);
+    }
 }
 
-.text-small {
-    font-size: 12px;
-    color: #666;
-}
+@media (max-width: 768px) {
+    .chart-config {
+        grid-template-columns: 1fr;
+    }
 
-.mt-20 {
-    margin-top: 20px;
-}
+    .field-selection {
+        grid-template-columns: 1fr;
+    }
 
-.mb-20 {
-    margin-bottom: 20px;
-}
+    .controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
 
-.hidden {
-    display: none;
-}
+    .axis-selector {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 5px;
+    }
 
-.flex {
-    display: flex;
-}
+        .axis-selector label {
+            min-width: auto;
+        }
 
-.gap-10 {
-    gap: 10px;
+    .graph-card {
+        width: 100%;
+    }
+
+    .axis-selectors {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .axis-selector-item {
+        flex-direction: row;
+        align-items: center;
+        gap: 10px;
+    }
+
+        .axis-selector-item label {
+            min-width: 60px;
+        }
 }
