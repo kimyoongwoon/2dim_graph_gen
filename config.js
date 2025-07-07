@@ -485,6 +485,35 @@ function updateChartTypes(types) {
 }
 
 // ============================================================================
+// 설정 빌더 함수들
+// ============================================================================
+
+function buildScalingConfig() {
+    const scalingType = document.getElementById('sizeScaling')?.value || 'default';
+    
+    switch (scalingType) {
+        case 'sigmoid':
+            const k = parseFloat(document.getElementById('sigmoidK')?.value) || 1.0;
+            return {
+                type: 'sigmoid',
+                params: { k }
+            };
+            
+        case 'linear':
+            // 기본 선형 파라미터 (필요시 UI로 확장 가능)
+            return {
+                type: 'linear',
+                params: { a: 1.0, b: 0 }
+            };
+            
+        default:
+            return {
+                type: 'default'
+            };
+    }
+}
+
+// ============================================================================
 // UI 정리 함수들
 // ============================================================================
 
@@ -523,35 +552,6 @@ function hideFieldSelection() {
 
 function hideChartTypes() {
     updateChartTypes([]);
-}
-
-// ============================================================================
-// 설정 빌더 함수들
-// ============================================================================
-
-function buildScalingConfig() {
-    const scalingType = document.getElementById('sizeScaling')?.value || 'default';
-    
-    switch (scalingType) {
-        case 'sigmoid':
-            const k = parseFloat(document.getElementById('sigmoidK')?.value) || 1.0;
-            return {
-                type: 'sigmoid',
-                params: { k }
-            };
-            
-        case 'linear':
-            // 기본 선형 파라미터 (필요시 UI로 확장 가능)
-            return {
-                type: 'linear',
-                params: { a: 1.0, b: 0 }
-            };
-            
-        default:
-            return {
-                type: 'default'
-            };
-    }
 }
 
 // ============================================================================

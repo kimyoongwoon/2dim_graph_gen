@@ -109,14 +109,14 @@ function generateData() {
     }
 }
 
-function goToVisualization() {
+function goToChart() {
     if (!raw_data || raw_data.length === 0) {
         updateStatus('먼저 데이터를 생성해주세요', 'error');
         return;
     }
 
-    console.log('[MAIN] 차트 페이지로 이동, 데이터:', raw_data.length, '개');
-    window.location.href = 'graph_complete.html';
+    console.log('[MAIN] 차트 설정 페이지로 이동, 데이터:', raw_data.length, '개');
+    window.location.href = 'config.html';
 }
 
 // 🔄 데이터 미리보기 표시 (기존 로직 유지)
@@ -183,8 +183,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (goToChartBtn) {
-        goToChartBtn.addEventListener('click', goToVisualization);
-        console.log('[MAIN] goToVisualization 이벤트 리스너 등록 완료');
+        goToChartBtn.addEventListener('click', goToChart);
+        console.log('[MAIN] goToChart 이벤트 리스너 등록 완료');
     }
 
     // QWebChannel 연결
@@ -201,7 +201,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 🔄 기존 sessionStorage 정리 (새로운 세션 시작)
     try {
-        sessionStorageManager.clearSessionStorageData();
+        sessionStorage.removeItem('chartData');
+        sessionStorage.removeItem('chartData_meta');
+        sessionStorage.removeItem('chartConfig');
         console.log('[MAIN] 기존 sessionStorage 정리 완료');
     } catch (error) {
         console.warn('[MAIN] sessionStorage 정리 오류:', error);
@@ -214,5 +216,6 @@ window.addEventListener('beforeunload', () => {
     clearAllChartData();
 
     // 선택적: sessionStorage 정리 (보통은 유지)
-    // sessionStorageManager.clearSessionStorageData();
+    // sessionStorage.removeItem('chartData');
+    // sessionStorage.removeItem('chartData_meta');
 });
