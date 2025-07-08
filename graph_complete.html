@@ -2,31 +2,30 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>차트 설정</title>
-    <link rel="stylesheet" href="configuration.css">
+    <title>고차원 데이터 시각화</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- ✅ Plotly.js (통합 시스템 - 모든 차트 타입) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.26.0/plotly.min.js"></script>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h2>고차원 데이터 차트 설정</h2>
-            <p>Chart Configuration</p>
+            <h2>고차원 데이터 시각화</h2>
+            <p>Multi-Dimensional Data Visualization (Unified System)</p>
         </div>
-
         <!-- 진행 단계 표시 -->
         <div class="step-indicator">
             <div class="step completed" id="step1">1. 데이터 생성</div>
             <div class="step active" id="step2">2. 차트 설정</div>
             <div class="step" id="step3">3. 시각화</div>
         </div>
-
         <!-- 데이터 정보 표시 -->
         <div id="data-info" class="data-info">
             <strong>데이터 로딩 중...</strong>
         </div>
-
         <!-- 차트 설정 섹션 -->
         <div class="section" id="chartConfigSection">
-            <h4>차트 설정</h4>
+            <h4>2. 차트 설정</h4>
             <div class="chart-config">
                 <div class="config-column">
                     <h5>차원 및 필드 선택</h5>
@@ -43,7 +42,7 @@
                         </select>
                     </div>
                     <div class="advanced-options">
-                        <h6>고급 옵션</h6>
+                        <h6>고급 옵션 (통합 시스템 연동)</h6>
                         <div class="axis-selector">
                             <label>크기 스케일링:</label>
                             <select id="sizeScaling">
@@ -55,19 +54,32 @@
                             <label>시그모이드 K값:</label>
                             <input type="number" id="sigmoidK" value="1.0" min="0.1" max="10.0" step="0.1">
                         </div>
+                        <small style="color: #666; font-style: italic;">
+                            💡 차트 생성 후 고급 UI 컨트롤로 교체됩니다
+                        </small>
                     </div>
                     <div class="controls">
-                        <button onclick="proceedToVisualization()" id="proceedBtn" disabled>시각화 진행</button>
+                        <button onclick="createVisualization()" id="createChartBtn" disabled>통합 차트 생성</button>
                         <button onclick="goBackToGenerator()" class="secondary-btn">데이터 생성으로 돌아가기</button>
                     </div>
                 </div>
             </div>
         </div>
-
         <!-- 에러 표시 -->
         <div id="errorDisplay" class="error-display" style="display: none;"></div>
+        <!-- 메타데이터 표시 -->
+        <div class="section" id="metadataSection" style="display: none;">
+            <h4>3. 생성된 메타데이터</h4>
+            <div id="metadataDisplay" class="metadata-display">메타데이터가 여기에 표시됩니다</div>
+        </div>
+        <!-- 차트 표시 -->
+        <div class="chart-container" id="chartContainer" style="display: none;">
+            <h3>통합 시각화 결과</h3>
+            <div id="chartInfo" class="chart-info">차트 정보가 여기에 표시됩니다</div>
+            <!-- chart-canvas-wrapper는 JavaScript에서 동적 생성 -->
+            <!-- 통합 시스템의 UI 컨트롤들이 자동으로 추가됩니다 -->
+        </div>
     </div>
-
-    <script type="module" src="config.js"></script>
+    <script type="module" src="graph_complete.js"></script>
 </body>
 </html>

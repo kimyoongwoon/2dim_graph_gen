@@ -216,6 +216,68 @@ button:disabled {
     background: #1e7e34;
 }
 
+/* 로딩 애니메이션 */
+.loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    font-size: 16px;
+    color: var(--c-text-light);
+}
+
+.loading::before {
+    content: "⟳ ";
+    animation: spin 1s linear infinite;
+    margin-right: 8px;
+    font-size: 20px;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* 차트 전체 화면 모드 (선택적) */
+.chart-fullscreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 1000;
+    background: var(--c-white);
+    display: flex;
+    flex-direction: column;
+}
+
+.chart-fullscreen .chart-canvas-wrapper {
+    flex: 1;
+    height: auto;
+    border: none;
+    border-radius: 0;
+}
+
+.chart-fullscreen .fullscreen-controls {
+    padding: 10px;
+    background: var(--c-light);
+    border-top: 1px solid var(--c-border);
+    display: flex;
+    justify-content: center;
+}
+
+/* 성능 최적화 */
+.chart-container {
+    will-change: transform;
+}
+
+.chart-canvas-wrapper * {
+    box-sizing: border-box;
+}
 
 /* 반응형 */
 @media (max-width: 768px) {
@@ -262,5 +324,26 @@ button:disabled {
     .step {
         font-size: 10px;
         padding: 6px 8px;
+    }
+}
+
+/* 다크 모드 지원 (선택적) */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --c-bg: #1a1a1a;
+        --c-white: #2d2d2d;
+        --c-light: #333;
+        --c-border: #555;
+        --c-text-dark: #fff;
+        --c-text-light: #ccc;
+    }
+    
+    body {
+        background: var(--c-bg);
+        color: var(--c-text-dark);
+    }
+    
+    .chart-canvas-wrapper {
+        background: var(--c-white);
     }
 }
