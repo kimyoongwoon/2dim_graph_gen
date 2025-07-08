@@ -1,5 +1,5 @@
 // ============================================================================
-// chart_display.js - 차트 표시 페이지 로직 (Step 3 전용)
+// chart_display.js - 차트 표시 페이지 로직 (Step 3 전용) - 수정된 버전
 // ============================================================================
 
 import { sessionStorageManager } from '../shared/session_storage_manager/index.js';
@@ -11,7 +11,7 @@ import {
     createSliderContainer,
     processDataFilter,
     ChartWrapper
-} from '../3dim_chart_gen/index.js';
+} from '../../3dim_chart_gen/index.js';
 
 // 전역 변수들
 let currentChartWrapper = null;
@@ -173,8 +173,9 @@ function createChart() {
                         updateStatus(`⚠️ 성능 최적화로 ${limitInfo.displayed}/${limitInfo.total}개 데이터 표시`, 'info');
                     });
 
-                    // ✅ 차트 정보 표시
-                    displayChartInfo(unifiedConfig.type, chartConfig.selectedFields, raw_data.length);
+                    // ✅ 수정: selectedFields를 dataMapping에서 추출
+                    const selectedFields = Object.values(chartConfig.dataMapping || {});
+                    displayChartInfo(unifiedConfig.type, selectedFields, raw_data.length);
 
                     updateStatus('통합 시각화 생성 완료!', 'success');
                     updateStepIndicator(3);
@@ -237,7 +238,8 @@ function displayChartInfo(chartType, selectedFields, dataCount) {
     const info = document.getElementById('chartInfo');
     if (!info) return;
 
-    const fieldsInfo = selectedFields.join(' → ');
+    // ✅ 수정: selectedFields가 배열인지 확인
+    const fieldsInfo = Array.isArray(selectedFields) ? selectedFields.join(' → ') : '필드 정보 없음';
 
     info.innerHTML = `
         <strong>차트 타입:</strong> ${chartType} | 
