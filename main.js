@@ -119,8 +119,9 @@ function goToVisualization() {
         return;
     }
 
-    console.log('[MAIN] 차트 페이지로 이동, 데이터:', raw_data.length, '개');
-    window.location.href = 'graph_complete.html';
+    console.log('[MAIN] 차트 설정 페이지로 이동, 데이터:', raw_data.length, '개');
+    // ✅ 수정: chart_config.html로 이동
+    window.location.href = 'chart_config/chart_config.html';
 }
 
 // 🔄 데이터 미리보기 표시 (기존 로직 유지)
@@ -205,7 +206,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 🔄 기존 sessionStorage 정리 (새로운 세션 시작)
     try {
-        sessionStorageManager.clearSessionStorageData();
+        sessionStorageManager.clearAllChartData();
         console.log('[MAIN] 기존 sessionStorage 정리 완료');
     } catch (error) {
         console.warn('[MAIN] sessionStorage 정리 오류:', error);
@@ -215,8 +216,12 @@ document.addEventListener('DOMContentLoaded', () => {
 // 페이지 언로드시 데이터 정리
 window.addEventListener('beforeunload', () => {
     console.log('[MAIN] 페이지 언로드 - 데이터 정리');
-    clearAllChartData();
+    
+    // 차트 정리 함수가 존재하면 호출 (전역 함수)
+    if (typeof clearAllChartData === 'function') {
+        clearAllChartData();
+    }
 
     // 선택적: sessionStorage 정리 (보통은 유지)
-    // sessionStorageManager.clearSessionStorageData();
+    // sessionStorageManager.clearAllChartData();
 });

@@ -1,0 +1,243 @@
+:root {
+    --c-white: #fff;
+    --c-bg: #f5f5f5;
+    --c-light: #f8f9fa;
+    --c-border: #ddd;
+    --c-primary: #007bff;
+    --c-primary-hover: #0056b3;
+    --c-secondary: #6c757d;
+    --c-secondary-hover: #545b62;
+    --c-success: #28a745;
+    --c-warning-bg: #fff3cd;
+    --c-warning-border: #ffeaa7;
+    --c-error-bg: #f8d7da;
+    --c-error-border: #f5c6cb;
+    --c-text-dark: #333;
+    --c-text-light: #666;
+    --spacing: 15px;
+    --font-base: 14px;
+}
+
+body {
+    margin: 0;
+    padding: 20px;
+    font-family: Arial, sans-serif;
+    background: var(--c-bg);
+    color: var(--c-text-dark);
+}
+
+h1, h2,
+.header h2, .section h4, .section h5, .section h6 {
+    color: var(--c-text-dark);
+    margin: 0 0 var(--spacing) 0;
+}
+
+/* 공통 컨테이너 스타일 */
+.container,
+.section,
+.controls,
+.config-column {
+    background: var(--c-white);
+    border: 1px solid var(--c-border);
+    padding: var(--spacing);
+    margin-bottom: var(--spacing);
+}
+
+.section {
+    background: var(--c-light);
+}
+
+/* 폼 요소 */
+select, input, button {
+    padding: 6px 10px;
+    border: 1px solid #ccc;
+    font-size: var(--font-base);
+    background: var(--c-white);
+}
+
+select {
+    min-width: 150px;
+}
+
+    select.field-selector {
+        min-width: 180px;
+    }
+
+input[type="number"] {
+    width: 80px;
+}
+
+button {
+    background: var(--c-primary);
+    color: #fff;
+    cursor: pointer;
+    border: 1px solid var(--c-primary);
+    min-width: 120px;
+}
+
+    button:hover {
+        background: var(--c-primary-hover);
+    }
+
+    button:disabled {
+        background: var(--c-secondary);
+        border-color: var(--c-secondary);
+        cursor: not-allowed;
+    }
+
+.secondary-btn {
+    background: var(--c-secondary);
+    border-color: var(--c-secondary);
+}
+
+    .secondary-btn:hover {
+        background: var(--c-secondary-hover);
+    }
+
+/* 차트 설정 */
+.chart-config {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing);
+    margin: var(--spacing) 0;
+}
+
+.axis-mapping {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing);
+}
+
+.axis-selector {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+    .axis-selector label {
+        min-width: 80px;
+        font-weight: bold;
+        color: var(--c-text-dark);
+        font-size: 12px;
+        line-height: 1.3;
+    }
+
+    .axis-selector small {
+        color: var(--c-text-light);
+        font-weight: normal;
+    }
+
+.advanced-options {
+    background: var(--c-warning-bg);
+    padding: var(--spacing);
+    margin-top: var(--spacing);
+    border: 1px solid var(--c-warning-border);
+}
+
+/* 단계 표시 */
+.step-indicator {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 30px;
+}
+
+.step {
+    flex: 1;
+    max-width: 180px;
+    text-align: center;
+    padding: 10px 15px;
+    background: var(--c-light);
+    margin: 0 5px;
+    color: var(--c-secondary);
+    border: 1px solid var(--c-border);
+    font-size: 13px;
+    font-weight: bold;
+}
+
+    .step.active {
+        background: var(--c-primary);
+        color: #fff;
+        border-color: var(--c-primary);
+    }
+
+    .step.completed {
+        background: var(--c-success);
+        color: #fff;
+        border-color: var(--c-success);
+    }
+
+/* 상태 메시지 */
+.error-display, .data-info {
+    padding: 10px;
+    margin: var(--spacing) 0;
+    border: 1px solid;
+    font-weight: bold;
+}
+
+.error-display {
+    background: var(--c-error-bg);
+    color: #721c24;
+    border-color: var(--c-error-border);
+}
+
+.data-info {
+    background: #e3f2fd;
+    color: var(--c-text-dark);
+    border-color: #2196f3;
+    font-size: 14px;
+}
+
+    .data-info.success {
+        background: #d4edda;
+        border-color: #c3e6cb;
+        color: #155724;
+    }
+
+    .data-info.error {
+        background: var(--c-error-bg);
+        border-color: var(--c-error-border);
+        color: #721c24;
+    }
+
+/* 간략화된 메시지 스타일 */
+.error, .warning, .info {
+    padding: 15px;
+    border-radius: 4px;
+    margin: 10px 0;
+    font-weight: bold;
+}
+
+.error {
+    color: #721c24;
+    background: var(--c-error-bg);
+    border: 1px solid var(--c-error-border);
+}
+
+.warning {
+    color: #856404;
+    background: var(--c-warning-bg);
+    border: 1px solid var(--c-warning-border);
+}
+
+.info {
+    color: #055160;
+    background: #d1ecf1;
+    border: 1px solid #bee5eb;
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+    .chart-config {
+        grid-template-columns: 1fr;
+    }
+
+    .axis-selector {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 5px;
+    }
+
+        .axis-selector label {
+            min-width: auto;
+        }
+}

@@ -2,16 +2,16 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>고차원 데이터 시각화</title>
-    <link rel="stylesheet" href="graph_complete.css">
+    <title>차트 설정</title>
+    <link rel="stylesheet" href="chart_config.css">
     <!-- ✅ Plotly.js (통합 시스템 - 모든 차트 타입) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.26.0/plotly.min.js"></script>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h2>고차원 데이터 시각화</h2>
-            <p>Multi-Dimensional Data Visualization (Unified System)</p>
+            <h2>차트 설정</h2>
+            <p>Multi-Dimensional Data Configuration</p>
         </div>
         <!-- 진행 단계 표시 -->
         <div class="step-indicator">
@@ -67,19 +67,7 @@
         </div>
         <!-- 에러 표시 -->
         <div id="errorDisplay" class="error-display" style="display: none;"></div>
-        <!-- 메타데이터 표시 -->
-        <div class="section" id="metadataSection" style="display: none;">
-            <h4>3. 생성된 메타데이터</h4>
-            <div id="metadataDisplay" class="metadata-display">메타데이터가 여기에 표시됩니다</div>
-        </div>
-        <!-- 차트 표시 -->
-        <div class="chart-container" id="chartContainer" style="display: none;">
-            <h3>통합 시각화 결과</h3>
-            <div id="chartInfo" class="chart-info">차트 정보가 여기에 표시됩니다</div>
-            <!-- chart-canvas-wrapper는 JavaScript에서 동적 생성 -->
-            <!-- 통합 시스템의 UI 컨트롤들이 자동으로 추가됩니다 -->
-        </div>
     </div>
-    <script type="module" src="graph_complete.js"></script>
+    <script type="module" src="chart_config.js"></script>
 </body>
 </html>
