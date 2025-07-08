@@ -4,12 +4,10 @@
 
 import {
     qwebchannelReceiver,
-    dataDeserializer,
-    sessionStorageManager,
-    dataValidator
-} from './data_pipeline/index.js';
+    dataDeserializer
+} from './index_source/index.js';
 
-import { clearAllChartData } from './shared/error_handler.js';
+import { sessionStorageManager } from './shared/session_storage_manager/index.js';
 
 // 전역 변수
 let raw_data = null;

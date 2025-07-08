@@ -3,15 +3,12 @@
 // ============================================================================
 
 import {
-    sessionStorageManager,
     dataValidator,
-    dimensionCalculator,
-    //chartTypeProvider,
-    configBuilder,
-    //containerCreator
-} from './data_pipeline/index.js';
+    dimensionCalculator, 
+    configBuilder
+} from './graph_complete_source/index.js';
 
-import { showError, clearAllChartData } from './shared/error_handler.js';
+import { sessionStorageManager } from './shared/session_storage_manager/index.js';
 
 // ✅ 통합 시스템 import (2D/3D/4D 모두 지원)
 import {
