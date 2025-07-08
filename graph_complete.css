@@ -40,7 +40,6 @@ h1, h2,
 .chart-container,
 .graph-card,
 .options-container,
-.data-preview,
 .metadata-display {
     background: var(--c-white);
     border: 1px solid var(--c-border);
@@ -51,54 +50,6 @@ h1, h2,
 .section {
     background: var(--c-light);
 }
-
-/* 필드 선택 */
-.field-selection {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: var(--spacing);
-    margin: var(--spacing) 0;
-}
-
-.field-checkbox {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px;
-    background: var(--c-white);
-    border: 1px solid var(--c-border);
-}
-
-    .field-checkbox input[type="checkbox"] {
-        margin: 0;
-    }
-
-    .field-checkbox label {
-        font-size: 13px;
-        line-height: 1.3;
-    }
-
-        .field-checkbox label strong {
-            color: var(--c-text-dark);
-        }
-
-        .field-checkbox label small {
-            color: var(--c-text-light);
-        }
-
-/* 컨트롤 */
-.controls {
-    display: flex;
-    gap: var(--spacing);
-    align-items: center;
-    flex-wrap: wrap;
-    background: var(--c-white);
-}
-
-    .controls label {
-        font-weight: bold;
-        color: var(--c-text-dark);
-    }
 
 /* 폼 요소 */
 select, input, button {
@@ -220,31 +171,6 @@ button {
     }
 
 /* 상태 메시지 */
-.status {
-    padding: 10px 15px;
-    margin: var(--spacing) 0;
-    border: 1px solid;
-    font-weight: bold;
-}
-
-    .status.info {
-        background: #d1ecf1;
-        color: #0c5460;
-        border-color: #bee5eb;
-    }
-
-    .status.success {
-        background: #d4edda;
-        color: #155724;
-        border-color: #c3e6cb;
-    }
-
-    .status.error {
-        background: var(--c-error-bg);
-        color: #721c24;
-        border-color: var(--c-error-border);
-    }
-
 .error-display, .data-info {
     padding: 10px;
     margin: var(--spacing) 0;
@@ -565,15 +491,6 @@ tr:nth-child(even) {
 @media (max-width: 768px) {
     .chart-config {
         grid-template-columns: 1fr;
-    }
-
-    .field-selection {
-        grid-template-columns: 1fr;
-    }
-
-    .controls {
-        flex-direction: column;
-        align-items: stretch;
     }
 
     .axis-selector {
