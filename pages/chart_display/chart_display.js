@@ -2,7 +2,7 @@
 // chart_display.js - 차트 표시 페이지 로직 (Step 3 전용) - 수정된 버전
 // ============================================================================
 
-import { sessionStorageManager } from '../shared/session_storage_manager/index.js';
+import { sessionStorageManager } from '../../sources/shared/session_storage_manager/index.js';
 
 // ✅ 통합 시스템 import (2D/3D/4D 모두 지원)
 import {
@@ -12,7 +12,7 @@ import {
     processDataFilter,
     ChartWrapper,
     create2DScatterTiled
-} from '../3dim_chart_gen/index.js';
+} from '../../lib/3dim_chart_gen/index.js';
 
 // 전역 변수들
 let currentChartWrapper = null;
