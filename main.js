@@ -5,9 +5,9 @@
 import {
     qwebchannelReceiver,
     dataDeserializer
-} from '../../sources/index_source/index.js';
+} from './index_source/index.js';
 
-import { sessionStorageManager } from '../../sources/shared/session_storage_manager/index.js';
+import { sessionStorageManager } from './shared/session_storage_manager/index.js';
 
 // 전역 변수
 let raw_data = null;
@@ -121,7 +121,7 @@ function goToVisualization() {
 
     console.log('[MAIN] 차트 설정 페이지로 이동, 데이터:', raw_data.length, '개');
     // ✅ 수정: chart_config.html로 이동
-    window.location.href = '../chart_config/chart_config.html';
+    window.location.href = 'chart_config/chart_config.html';
 }
 
 // 🔄 데이터 미리보기 표시 (기존 로직 유지)

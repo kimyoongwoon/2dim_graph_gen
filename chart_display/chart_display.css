@@ -151,7 +151,7 @@ button {
         color: #721c24;
     }
 
-/* 차트 컨테이너 */
+/* ✅ 차트 컨테이너 - 높이 대폭 확대 */
 .chart-container {
     background: var(--c-white);
     border: 1px solid var(--c-border);
@@ -159,15 +159,16 @@ button {
     margin-bottom: var(--spacing);
     display: flex;
     flex-direction: column;
-    min-height: 600px;
+    /* ✅ 600px → 1000px로 대폭 확대 */
+    min-height: 1000px;
 }
 
-.chart-container h3 {
-    color: var(--c-text-dark);
-    text-align: center;
-    margin-bottom: 20px;
-    font-size: 18px;
-}
+    .chart-container h3 {
+        color: var(--c-text-dark);
+        text-align: center;
+        margin-bottom: 20px;
+        font-size: 18px;
+    }
 
 .chart-info {
     background: var(--c-light);
@@ -178,12 +179,13 @@ button {
     text-align: center;
 }
 
-/* 차트 캔버스 래퍼 (동적 생성) */
+/* ✅ 차트 캔버스 래퍼 - 높이 대폭 확대 */
 .chart-canvas-wrapper {
     flex: 1;
     position: relative;
-    min-height: 400px;
-    height: 400px;
+    /* ✅ 400px → 800px로 대폭 확대 */
+    min-height: 800px;
+    height: 800px;
     background: var(--c-white);
     border: 1px solid var(--c-border);
 }
@@ -258,70 +260,17 @@ button {
         align-items: stretch;
     }
 
-    .bottom-controls button {
-        margin-bottom: 5px;
-    }
+        .bottom-controls button {
+            margin-bottom: 5px;
+        }
 
+    /* ✅ 모바일에서도 충분한 차트 영역 확보 */
     .chart-container {
-        min-height: 400px;
+        min-height: 800px;
     }
 
     .chart-canvas-wrapper {
-        min-height: 300px;
-        height: 300px;
+        min-height: 600px;
+        height: 600px;
     }
-}
-
-/* Clean working fix for chart overlay and spacing issues */
-
-/* Fix for chart overlay issue */
-.chart-canvas-wrapper .chart-wrapper {
-    height: 100% !important;
-    max-height: 1200px !important; /* Controlled height */
-    min-height: 450px !important; /* More space than before */
-}
-
-/* Better spacing for chart container */
-.chart-container {
-    min-height: 700px !important; /* Increase from 600px */
-    max-height: none;
-}
-
-/* Increase chart area size */
-.chart-canvas-wrapper {
-    min-height: 500px !important; /* Increase from 400px */
-    height: 500px !important;
-}
-
-/* Ensure bottom controls are always visible */
-.bottom-controls {
-    position: relative;
-    z-index: 1000;
-    margin-top: 15px;
-}
-
-/* Optimize control panel spacing */
-.control-panel-container {
-    margin-bottom: 8px !important;
-}
-
-.slider-container-wrapper {
-    margin-bottom: 8px !important;
-}
-
-/* Reduce info section spacing */
-.chart-info {
-    padding: 8px !important;
-    margin-bottom: 8px !important;
-}
-
-.data-info {
-    padding: 8px !important;
-    margin: 8px 0 !important;
-}
-
-/* Better plotly container sizing */
-.plotly-container {
-    min-height: 400px !important;
-    margin: 5px 0 !important;
 }

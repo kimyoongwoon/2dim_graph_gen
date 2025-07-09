@@ -6,9 +6,9 @@ import {
     dataValidator,
     dimensionCalculator,
     configBuilder
-} from '../../sources/chart_config_source/index.js';
+} from '../graph_complete_source/index.js';
 
-import { sessionStorageManager } from '../../sources/shared/session_storage_manager/index.js';
+import { sessionStorageManager } from '../shared/session_storage_manager/index.js';
 
 // 전역 변수들
 let raw_data = null;
