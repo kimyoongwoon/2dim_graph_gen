@@ -155,7 +155,7 @@ function validateChartConfig(rawData, config, containerElement) {
 
     // 차트 타입별 요구사항 검증
     const supportedTypes = [
-        '2d_scatter', '2d_size', '2d_color',
+        '2d_scatter', '2d_scatter_tiled', '2d_size', '2d_color',
         '3d_scatter_color', '3d_scatter_size', '3d_size_color', '3d_surface_scatter',
         '4d_scatter_size_color'
     ];
@@ -167,6 +167,7 @@ function validateChartConfig(rawData, config, containerElement) {
     // 차원별 최소 요구사항 확인
     const requiredDimensions = {
         '2d_scatter': 2,
+        '2d_scatter_tiled': 2,
         '2d_size': 2,
         '2d_color': 2,
         '3d_scatter_color': 3,
@@ -251,7 +252,6 @@ export function createChartContainer(containerElement, config) {
         sliderContainerDiv
     };
 }
-
 /**
  * 🔥 UI 컴포넌트들 설정 및 필터링 연동 (metadata + originalData 전달)
  * @param {Object} chartStructure - 차트 구조 엘리먼트들

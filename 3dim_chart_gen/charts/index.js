@@ -6,6 +6,7 @@
 export { create2DScatter } from './2dim/2d_scatter.js';
 export { create2DSize } from './2dim/2d_size.js';
 export { create2DColor } from './2dim/2d_color.js';
+export { create2DScatterTiled } from './2dim/2d_scatter_tiled.js';
 
 // 🆕 3D 확장 차트들 (3개)
 export { create3DScatterColor } from './3dim/3d_scatter_color.js';

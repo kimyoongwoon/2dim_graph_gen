@@ -10,8 +10,9 @@ import {
     createControlPanel,
     createSliderContainer,
     processDataFilter,
-    ChartWrapper
-} from '../../3dim_chart_gen/index.js';
+    ChartWrapper,
+    create2DScatterTiled
+} from '../3dim_chart_gen/index.js';
 
 // 전역 변수들
 let currentChartWrapper = null;
@@ -159,6 +160,98 @@ function createChart() {
                     // ✅ 통합 시스템으로 차트 생성 (자동 컨테이너 생성)
                     currentChartWrapper = generateChart(raw_data, unifiedConfig, canvasWrapper);
 
+                    // ✅ TILING + SCROLL ZOOM INTEGRATION (Option 1)
+                    // ✅ MODIFIED ZOOM INTEGRATION
+                    if (unifiedConfig.type === '2d_scatter_tiled' && currentChartWrapper.plotlyDiv) {
+                        console.log('[CHART] 🎯 Setting up tiling zoom system with scroll support');
+
+                        const plotlyDiv = currentChartWrapper.plotlyDiv;
+
+                        // 🔥 STORE FULL CHART CONFIG (this is key!)
+                        const fullChartConfig = currentChartWrapper.chartData;
+
+                        // Debug - check if tileLevels exist
+                        console.log('📊 Stored chart config has tileLevels?', !!fullChartConfig.tileLevels);
+                        console.log('📊 Number of tile levels:', fullChartConfig.tileLevels?.levels?.length);
+
+                        // 🎮 ZOOM HANDLER WITH STORED CONFIG
+                        let zoomTimeout;
+                        const zoomHandler = (eventData) => {
+                            console.log('🔥 Zoom event detected:', eventData.type || 'relayout');
+                            if (zoomTimeout) clearTimeout(zoomTimeout);
+                            zoomTimeout = setTimeout(() => {
+                                import('../3dim_chart_gen/charts/2dim/2d_scatter_tiled.js').then(({ handleZoomLevelChange }) => {
+                                    handleZoomLevelChange(plotlyDiv, fullChartConfig); // Use stored config
+                                }).catch(console.error);
+                            }, 100);
+                        };
+
+                        // Try both event methods
+                        plotlyDiv.on('plotly_relayout', zoomHandler); // ✅ Correct
+                        // AND also try: plotlyDiv.on('plotly_relayout', zoomHandler);
+                        // 📊 DEBUG INDICATOR (optional - only if DEBUG_MODE is true)
+                        if (typeof DEBUG_MODE !== 'undefined' && DEBUG_MODE) {
+                            setTimeout(() => {
+                                const indicator = document.createElement('div');
+                                indicator.id = 'zoom-level-indicator';
+                                indicator.style.cssText = `
+                position: absolute; top: 10px; left: 10px;
+                background: rgba(0,123,255,0.9); color: white;
+                padding: 6px 10px; border-radius: 4px;
+                font-family: monospace; font-size: 11px;
+                z-index: 1000; pointer-events: none;
+            `;
+                                plotlyDiv.parentElement.style.position = 'relative';
+                                plotlyDiv.parentElement.appendChild(indicator);
+
+                                const updateIndicator = () => {
+                                    const config = currentChartWrapper.getConfig();
+                                    const level = config?.currentLevel || 1;
+                                    const gridSize = config?.tileLevels?.levels[level - 1]?.gridSize || 'N/A';
+                                    indicator.textContent = `Level ${level} (${gridSize}×${gridSize})`;
+                                };
+                                updateIndicator();
+                                window.Plotly.Plots.on(plotlyDiv, 'plotly_relayout', () => setTimeout(updateIndicator, 100));
+                            }, 100);
+                        }
+
+                        // 🧹 ENHANCED CLEANUP
+                        const originalDestroy = currentChartWrapper.destroy;
+                        currentChartWrapper.destroy = function () {
+                            console.log('[CHART] Cleaning up tiled chart resources...');
+
+                            // 🔧 CORRECT: Remove Plotly event listeners
+                            if (this.plotlyDiv && typeof this.plotlyDiv.removeListener === 'function') {
+                                try {
+                                    this.plotlyDiv.removeListener('plotly_relayout', zoomHandler);
+                                    console.log('[CHART] Plotly event listener removed');
+                                } catch (error) {
+                                    console.warn('[CHART] Event listener removal failed:', error);
+                                }
+                            }
+
+                            // Clear timeout
+                            if (zoomTimeout) {
+                                clearTimeout(zoomTimeout);
+                                zoomTimeout = null;
+                            }
+
+                            // Remove debug indicator
+                            const indicator = document.getElementById('zoom-level-indicator');
+                            if (indicator) {
+                                indicator.remove();
+                            }
+
+                            // Call original destroy
+                            originalDestroy.call(this);
+                        };
+
+                        console.log('[CHART] ✅ Tiling zoom system ready (scroll + drag zoom enabled)');
+                    }
+
+                    console.log('[CHART] 통합 시스템 차트 생성 완료');
+                    console.timeEnd('실제차트생성');
+
                     console.log('[CHART_DISPLAY] 통합 시스템 차트 생성 완료');
                     console.timeEnd('실제차트생성');
 
@@ -223,6 +316,7 @@ function mapChartType(oldType, is3D) {
 
     const mapping = {
         'scatter': '2d_scatter',
+        'scatter_tiled': '2d_scatter_tiled',
         'size': '2d_size',
         'color': '2d_color',
         'scatter_size': '3d_scatter_size',

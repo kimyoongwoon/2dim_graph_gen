@@ -20,7 +20,7 @@ export default function buildChartConfigForGeneration(chartType, selectedFields,
     }
 
     // 데이터 매핑 생성
-    const dataMapping = createDataMapping(selectedFields, dimension, is3D);
+    const dataMapping = createDataMapping(selectedFields, dimension, is3D, chartType);
 
     // 기본 옵션 설정
     const options = {
@@ -56,6 +56,12 @@ function createDataMapping(fields, dimension, is3D, chartType) {
         // 2D mode mapping based on chart type
         switch (chartType) {
             case 'scatter':
+                // 2D: x, y
+                mapping.x = fields[0];
+                mapping.y = fields[1];
+                break;
+
+            case 'scatter_tiled':
                 // 2D: x, y
                 mapping.x = fields[0];
                 mapping.y = fields[1];

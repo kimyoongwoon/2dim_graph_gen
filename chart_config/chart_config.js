@@ -4,7 +4,7 @@
 
 import {
     dataValidator,
-    dimensionCalculator, 
+    dimensionCalculator,
     configBuilder
 } from '../graph_complete_source/index.js';
 
@@ -491,6 +491,7 @@ function get2DChartTypes(dimension) {
         ],
         2: [
             { value: 'scatter', label: 'Scatter Plot', description: 'X-Y 산점도' },
+            { value: 'scatter_tiled', label: 'Scatter_Tiled Plot', description: 'X-Y 산점도 with LoD' },
             { value: 'size', label: 'Size Chart', description: 'X축 + 크기 인코딩' },
             { value: 'color', label: 'Color Chart', description: 'X축 + 색상 인코딩' }
         ],

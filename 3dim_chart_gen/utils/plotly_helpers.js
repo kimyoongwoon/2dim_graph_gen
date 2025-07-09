@@ -475,6 +475,7 @@ export function createPlotlyConfig(options = {}) {
 import { create2DScatter } from '../charts/2dim/2d_scatter.js';
 import { create2DSize } from '../charts/2dim/2d_size.js';
 import { create2DColor } from '../charts/2dim/2d_color.js';
+import { create2DScatterTiled } from '../charts/2dim/2d_scatter_tiled.js';
 
 // 3D 차트 함수들 import
 import { create3DScatterColor } from '../charts/3dim/3d_scatter_color.js';
@@ -527,6 +528,8 @@ function createChartConfigForType(data, dataset, config) {
     switch (config.type) {
         case '2d_scatter':
             return create2DScatter(data, dataset, {});
+        case '2d_scatter_tiled':
+            return create2DScatterTiled(data, dataset, {});
         case '2d_size':
             return create2DSize(data, dataset, config.scalingConfig || {});
         case '2d_color':

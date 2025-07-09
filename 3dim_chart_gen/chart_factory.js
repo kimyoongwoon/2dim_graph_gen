@@ -6,6 +6,7 @@
 import { create2DScatter } from './charts/2dim/2d_scatter.js';
 import { create2DSize } from './charts/2dim/2d_size.js';
 import { create2DColor } from './charts/2dim/2d_color.js';
+import { create2DScatterTiled } from './charts/2dim/2d_scatter_tiled.js';
 
 // 3D 차트 함수들 import
 import { create3DScatterColor } from './charts/3dim/3d_scatter_color.js';
@@ -68,6 +69,12 @@ export function createVisualization(dataset, vizType, data, scalingConfig = {}, 
                 if (dimensions < 2) throw new Error('2D color는 최소 2개 축이 필요합니다');
                 console.log('🌈 2D Color 차트 생성');
                 chartConfig = create2DColor(data, dataset, colorConfig);
+                break;
+
+            case '2d_scatter_tiled':
+                if (dimensions < 2) throw new Error('2D scatter tiled는 최소 2개 축이 필요합니다');
+                console.log('🗺️ 2D Scatter Tiled 차트 생성');
+                chartConfig = create2DScatterTiled(data, dataset, {});
                 break;
 
             // ===== 3차원 차트 (4개) =====
@@ -175,6 +182,14 @@ export function getSupportedChartTypes() {
             type: '2d_scatter',
             name: '2D Scatter',
             description: 'X,Y 산점도',
+            dimension: 2,
+            dataRequirement: ['x', 'y'],
+            implemented: false // Phase 3에서 구현
+        },
+        {
+            type: '2d_scatter_tiled',
+            name: '2D Scatter Tiled',
+            description: 'X,Y 산점도 (타일 형태로 표현)',
             dimension: 2,
             dataRequirement: ['x', 'y'],
             implemented: false // Phase 3에서 구현

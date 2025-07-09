@@ -188,7 +188,7 @@ function getValidChartTypesForDimensionAndMode(dimension, is3D) {
         // 2D 차트 타입 (README 기반)
         const chart2DTypes = {
             1: ['line1d', 'category'],
-            2: ['scatter', 'size', 'color', 'bar', 'bar_size', 'bar_color'],
+            2: ['scatter', 'scatter_tiled', 'size', 'color', 'bar', 'bar_size', 'bar_color'],
             3: ['scatter_size', 'scatter_color', 'size_color', 'grouped_bar', 'grouped_bar_size', 'grouped_bar_color'],
             4: ['scatter_size_color', 'grouped_scatter_size_color']
         };
