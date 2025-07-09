@@ -5,9 +5,9 @@
 import {
     qwebchannelReceiver,
     dataDeserializer
-} from './index_source/index.js';
+} from '../../sources/index_source/index.js';
 
-import { sessionStorageManager } from './shared/session_storage_manager/index.js';
+import { sessionStorageManager } from '../../sources/shared/session_storage_manager/index.js';
 
 // 전역 변수
 let raw_data = null;
