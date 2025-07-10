@@ -42,8 +42,8 @@ function generateData() {
         return;
     }
 
-    if (!dataCount || dataCount < 1 || dataCount > 10000) {
-        updateStatus('데이터 개수는 1-10000 사이여야 합니다', 'error');
+    if (!dataCount || dataCount < 1 || dataCount > 100000) {
+        updateStatus('데이터 개수는 1-100000 사이여야 합니다', 'error');
         return;
     }
 
