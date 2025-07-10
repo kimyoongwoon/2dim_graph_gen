@@ -12,7 +12,7 @@ import {
     processDataFilter,
     ChartWrapper,
     create2DScatterTiled
-} from '../../lib/3dim_chart_gen/index.js';
+} from '../../lib/chart_gen/index.js';
 
 // 전역 변수들
 let currentChartWrapper = null;
