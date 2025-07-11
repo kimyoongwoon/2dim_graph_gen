@@ -1,0 +1,487 @@
+/* ============================================================================
+   layout/golden-layout.css - Golden Layout Visual Studio 테마 스타일
+   ============================================================================ */
+
+/* CSS 변수 정의 */
+:root {
+    --gl-vs-bg-dark: #1e1e1e;
+    --gl-vs-bg-darker: #252526;
+    --gl-vs-bg-light: #2d2d30;
+    --gl-vs-border: #3e3e42;
+    --gl-vs-text-primary: #cccccc;
+    --gl-vs-text-secondary: #969696;
+    --gl-vs-text-muted: #6a6a6a;
+    --gl-vs-accent: #007acc;
+    --gl-vs-accent-hover: #1177bb;
+    --gl-vs-success: #4ec9b0;
+    --gl-vs-warning: #ffcc02;
+    --gl-vs-error: #f44747;
+    
+    --gl-header-height: 32px;
+    --gl-tab-height: 32px;
+    --gl-splitter-size: 5px;
+    --gl-border-radius: 0px;
+    --gl-transition: all 0.2s ease;
+}
+
+/* ============================================================================
+   Golden Layout 컨테이너 기본 스타일
+   ============================================================================ */
+
+.lm_goldenlayout {
+    background: var(--gl-vs-bg-dark) !important;
+    color: var(--gl-vs-text-primary) !important;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+    font-size: 12px !important;
+}
+
+/* ============================================================================
+   아이템 (패널) 스타일
+   ============================================================================ */
+
+.lm_item {
+    background: var(--gl-vs-bg-dark) !important;
+    border: 1px solid var(--gl-vs-border) !important;
+    border-radius: var(--gl-border-radius) !important;
+}
+
+.lm_content {
+    background: var(--gl-vs-bg-dark) !important;
+    border: none !important;
+    overflow: hidden !important;
+}
+
+/* ============================================================================
+   헤더 스타일
+   ============================================================================ */
+
+.lm_header {
+    height: var(--gl-header-height) !important;
+    background: var(--gl-vs-bg-light) !important;
+    border-bottom: 1px solid var(--gl-vs-border) !important;
+    border-top: none !important;
+    border-left: none !important;
+    border-right: none !important;
+    border-radius: 0 !important;
+}
+
+.lm_header .lm_tabs {
+    height: 100% !important;
+}
+
+/* ============================================================================
+   탭 스타일
+   ============================================================================ */
+
+.lm_tab {
+    height: var(--gl-tab-height) !important;
+    background: var(--gl-vs-bg-light) !important;
+    border: none !important;
+    border-right: 1px solid var(--gl-vs-border) !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+    padding: 0 16px !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    color: var(--gl-vs-text-secondary) !important;
+    cursor: pointer !important;
+    transition: var(--gl-transition) !important;
+    display: flex !important;
+    align-items: center !important;
+    position: relative !important;
+}
+
+.lm_tab:hover {
+    background: var(--gl-vs-bg-darker) !important;
+    color: var(--gl-vs-text-primary) !important;
+}
+
+.lm_tab.lm_active {
+    background: var(--gl-vs-bg-dark) !important;
+    color: var(--gl-vs-text-primary) !important;
+    border-bottom: 2px solid var(--gl-vs-accent) !important;
+}
+
+.lm_tab .lm_title {
+    color: inherit !important;
+    font-size: inherit !important;
+    font-weight: inherit !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* 탭 닫기 버튼 */
+.lm_tab .lm_close_tab {
+    width: 16px !important;
+    height: 16px !important;
+    background: transparent !important;
+    border: none !important;
+    color: var(--gl-vs-text-muted) !important;
+    cursor: pointer !important;
+    margin-left: 8px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 2px !important;
+    font-size: 12px !important;
+    transition: var(--gl-transition) !important;
+}
+
+.lm_tab .lm_close_tab:hover {
+    background: var(--gl-vs-error) !important;
+    color: white !important;
+}
+
+/* ============================================================================
+   컨트롤 버튼들 (최대화, 팝아웃 등)
+   ============================================================================ */
+
+.lm_controls {
+    display: flex !important;
+    align-items: center !important;
+    height: 100% !important;
+    gap: 2px !important;
+    margin-right: 4px !important;
+}
+
+.lm_controls .lm_control {
+    width: 24px !important;
+    height: 24px !important;
+    background: transparent !important;
+    border: none !important;
+    color: var(--gl-vs-text-muted) !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 2px !important;
+    font-size: 12px !important;
+    transition: var(--gl-transition) !important;
+}
+
+.lm_controls .lm_control:hover {
+    background: var(--gl-vs-bg-darker) !important;
+    color: var(--gl-vs-text-primary) !important;
+}
+
+/* 특정 컨트롤 버튼들 */
+.lm_maximise {
+    font-family: monospace !important;
+}
+
+.lm_maximise:before {
+    content: "□" !important;
+}
+
+.lm_popout {
+    font-family: monospace !important;
+}
+
+.lm_popout:before {
+    content: "⧉" !important;
+}
+
+/* ============================================================================
+   스플리터 (구분선) 스타일
+   ============================================================================ */
+
+.lm_splitter {
+    background: var(--gl-vs-border) !important;
+    opacity: 1 !important;
+    transition: background-color 0.2s ease !important;
+}
+
+.lm_splitter:hover {
+    background: var(--gl-vs-accent) !important;
+}
+
+.lm_splitter.lm_vertical {
+    width: var(--gl-splitter-size) !important;
+    cursor: col-resize !important;
+}
+
+.lm_splitter.lm_horizontal {
+    height: var(--gl-splitter-size) !important;
+    cursor: row-resize !important;
+}
+
+/* ============================================================================
+   드래그 프록시 스타일
+   ============================================================================ */
+
+.lm_dragProxy {
+    background: var(--gl-vs-bg-light) !important;
+    border: 2px solid var(--gl-vs-accent) !important;
+    border-radius: 4px !important;
+    box-shadow: 0 4px 16px rgba(0, 122, 204, 0.3) !important;
+    color: var(--gl-vs-text-primary) !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    padding: 8px 12px !important;
+    opacity: 0.9 !important;
+}
+
+.lm_dragProxy .lm_title {
+    color: inherit !important;
+}
+
+/* ============================================================================
+   드롭 존 스타일
+   ============================================================================ */
+
+.lm_dropTargetIndicator {
+    border: 2px solid var(--gl-vs-accent) !important;
+    background: rgba(0, 122, 204, 0.1) !important;
+    border-radius: 4px !important;
+    opacity: 0.8 !important;
+}
+
+.lm_transition_indicator {
+    background: var(--gl-vs-accent) !important;
+    border: none !important;
+    opacity: 0.7 !important;
+}
+
+/* ============================================================================
+   팝아웃 윈도우 스타일
+   ============================================================================ */
+
+.lm_popin {
+    background: var(--gl-vs-bg-darker) !important;
+    border: 1px solid var(--gl-vs-border) !important;
+    color: var(--gl-vs-text-primary) !important;
+}
+
+.lm_popin .lm_content {
+    background: var(--gl-vs-bg-dark) !important;
+}
+
+/* ============================================================================
+   플로팅 윈도우 스타일 (커스텀)
+   ============================================================================ */
+
+.floating-window {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 12px;
+    color: var(--gl-vs-text-primary);
+}
+
+.floating-window .window-titlebar {
+    background: var(--gl-vs-bg-light);
+    border-bottom: 1px solid var(--gl-vs-border);
+    color: var(--gl-vs-text-primary);
+    user-select: none;
+}
+
+.floating-window .window-content {
+    background: var(--gl-vs-bg-dark);
+    color: var(--gl-vs-text-primary);
+}
+
+/* ============================================================================
+   차트 패널 전용 스타일
+   ============================================================================ */
+
+.chart-panel-container {
+    width: 100%;
+    height: 100%;
+    background: var(--gl-vs-bg-dark);
+    color: var(--gl-vs-text-primary);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.chart-panel-header {
+    height: 40px;
+    background: var(--gl-vs-bg-light);
+    border-bottom: 1px solid var(--gl-vs-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    flex-shrink: 0;
+}
+
+.chart-panel-content {
+    flex: 1;
+    background: var(--gl-vs-bg-dark);
+    position: relative;
+    overflow: hidden;
+}
+
+.chart-panel-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--gl-vs-text-muted);
+    font-size: 14px;
+    text-align: center;
+}
+
+.chart-panel-empty .empty-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+}
+
+.chart-panel-empty .empty-text {
+    line-height: 1.5;
+}
+
+/* ============================================================================
+   로딩 및 에러 상태 스타일
+   ============================================================================ */
+
+.chart-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    flex-direction: column;
+    color: var(--gl-vs-text-secondary);
+}
+
+.chart-loading .spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--gl-vs-border);
+    border-top: 3px solid var(--gl-vs-accent);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 16px;
+}
+
+.chart-error {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    flex-direction: column;
+    color: var(--gl-vs-error);
+    text-align: center;
+    padding: 20px;
+}
+
+.chart-error .error-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    opacity: 0.8;
+}
+
+/* ============================================================================
+   반응형 스타일
+   ============================================================================ */
+
+@media (max-width: 768px) {
+    .lm_header {
+        height: 36px !important;
+    }
+    
+    .lm_tab {
+        height: 36px !important;
+        padding: 0 12px !important;
+        font-size: 11px !important;
+    }
+    
+    .lm_controls .lm_control {
+        width: 28px !important;
+        height: 28px !important;
+    }
+    
+    .chart-panel-header {
+        height: 36px;
+        padding: 0 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .lm_tab {
+        padding: 0 8px !important;
+    }
+    
+    .lm_tab .lm_title {
+        max-width: 100px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+}
+
+/* ============================================================================
+   애니메이션
+   ============================================================================ */
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* 탭 전환 애니메이션 */
+.lm_content {
+    transition: opacity 0.2s ease !important;
+}
+
+/* 스플리터 호버 애니메이션 */
+.lm_splitter {
+    transition: background-color 0.2s ease !important;
+}
+
+/* ============================================================================
+   다크 테마 강제 적용
+   ============================================================================ */
+
+.lm_goldenlayout,
+.lm_goldenlayout * {
+    color-scheme: dark;
+}
+
+/* 스크롤바 스타일 */
+.lm_content::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.lm_content::-webkit-scrollbar-track {
+    background: var(--gl-vs-bg-darker);
+}
+
+.lm_content::-webkit-scrollbar-thumb {
+    background: var(--gl-vs-border);
+    border-radius: 4px;
+}
+
+.lm_content::-webkit-scrollbar-thumb:hover {
+    background: var(--gl-vs-text-muted);
+}
+
+/* ============================================================================
+   접근성 및 포커스 스타일
+   ============================================================================ */
+
+.lm_tab:focus {
+    outline: 2px solid var(--gl-vs-accent);
+    outline-offset: -2px;
+}
+
+.lm_controls .lm_control:focus {
+    outline: 2px solid var(--gl-vs-accent);
+    outline-offset: -2px;
+}
+
+/* ============================================================================
+   성능 최적화
+   ============================================================================ */
+
+.lm_content,
+.lm_tab,
+.lm_header {
+    will-change: transform;
+    backface-visibility: hidden;
+}
+
+/* GPU 가속 활성화 */
+.lm_dragProxy {
+    transform: translateZ(0);
+}

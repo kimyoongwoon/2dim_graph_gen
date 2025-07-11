@@ -1,0 +1,451 @@
+/* ============================================================================
+   pages/main/main.css - Visual Studio 스타일 메인 페이지 스타일
+   ============================================================================ */
+
+/* CSS 변수 정의 (Visual Studio Dark Theme) */
+:root {
+    --vs-bg-dark: #1e1e1e;
+    --vs-bg-darker: #252526;
+    --vs-bg-light: #2d2d30;
+    --vs-border: #3e3e42;
+    --vs-text-primary: #cccccc;
+    --vs-text-secondary: #969696;
+    --vs-text-muted: #6a6a6a;
+    --vs-accent-blue: #007acc;
+    --vs-accent-blue-hover: #1177bb;
+    --vs-accent-green: #4ec9b0;
+    --vs-accent-orange: #ce9178;
+    --vs-accent-red: #f44747;
+    --vs-accent-yellow: #ffcc02;
+    
+    /* Status colors */
+    --status-ready: #4ec9b0;
+    --status-loading: #ffcc02;
+    --status-success: #4ec9b0;
+    --status-error: #f44747;
+    
+    /* Dimensions */
+    --top-menu-height: 48px;
+    --border-radius: 4px;
+    --transition: all 0.2s ease;
+}
+
+/* 전역 스타일 리셋 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: var(--vs-bg-dark);
+    color: var(--vs-text-primary);
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ============================================================================
+   상단 메뉴바 (Visual Studio 스타일)
+   ============================================================================ */
+
+#top-menu-bar {
+    height: var(--top-menu-height);
+    background: var(--vs-bg-darker);
+    border-bottom: 1px solid var(--vs-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    position: relative;
+    z-index: 1000;
+    flex-shrink: 0;
+}
+
+.menu-section {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+.menu-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--vs-text-primary);
+    margin-right: 8px;
+}
+
+.menu-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.menu-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: transparent;
+    border: 1px solid var(--vs-border);
+    color: var(--vs-text-primary);
+    cursor: pointer;
+    border-radius: var(--border-radius);
+    font-size: 12px;
+    transition: var(--transition);
+    min-width: 120px;
+    justify-content: center;
+}
+
+.menu-btn:hover:not(:disabled) {
+    background: var(--vs-bg-light);
+    border-color: var(--vs-accent-blue);
+    color: var(--vs-accent-blue);
+}
+
+.menu-btn:active:not(:disabled) {
+    background: var(--vs-accent-blue);
+    color: white;
+}
+
+.menu-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    color: var(--vs-text-muted);
+}
+
+.menu-btn.secondary {
+    border-color: var(--vs-text-muted);
+    color: var(--vs-text-secondary);
+}
+
+.menu-btn.secondary:hover:not(:disabled) {
+    border-color: var(--vs-accent-orange);
+    color: var(--vs-accent-orange);
+}
+
+.menu-btn .icon {
+    font-size: 14px;
+}
+
+.menu-btn .text {
+    font-weight: 500;
+}
+
+/* ============================================================================
+   상태 표시기
+   ============================================================================ */
+
+.status-section {
+    display: flex;
+    align-items: center;
+}
+
+.status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 12px;
+    background: var(--vs-bg-light);
+    border: 1px solid var(--vs-border);
+    border-radius: var(--border-radius);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.status-dot.ready {
+    background: var(--status-ready);
+    box-shadow: 0 0 4px var(--status-ready);
+}
+
+.status-dot.loading {
+    background: var(--status-loading);
+    box-shadow: 0 0 4px var(--status-loading);
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+.status-dot.success {
+    background: var(--status-success);
+    box-shadow: 0 0 4px var(--status-success);
+}
+
+.status-dot.error {
+    background: var(--status-error);
+    box-shadow: 0 0 4px var(--status-error);
+    animation: pulse-error 1s ease-in-out infinite;
+}
+
+.status-text {
+    font-weight: 500;
+    color: var(--vs-text-secondary);
+}
+
+/* ============================================================================
+   골든 레이아웃 컨테이너
+   ============================================================================ */
+
+#golden-layout-container {
+    flex: 1;
+    width: 100%;
+    height: calc(100vh - var(--top-menu-height));
+    overflow: hidden;
+    position: relative;
+}
+
+/* ============================================================================
+   로딩 오버레이
+   ============================================================================ */
+
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(30, 30, 30, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    backdrop-filter: blur(4px);
+}
+
+.loading-overlay.hidden {
+    display: none;
+}
+
+.loading-content {
+    text-align: center;
+    color: var(--vs-text-primary);
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--vs-border);
+    border-top: 3px solid var(--vs-accent-blue);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 16px;
+}
+
+.loading-text {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--vs-text-secondary);
+}
+
+/* ============================================================================
+   에러 모달
+   ============================================================================ */
+
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+}
+
+.modal.hidden {
+    display: none;
+}
+
+.modal-content {
+    background: var(--vs-bg-darker);
+    border: 1px solid var(--vs-border);
+    border-radius: var(--border-radius);
+    width: 90%;
+    max-width: 480px;
+    max-height: 80vh;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    background: var(--vs-bg-light);
+    border-bottom: 1px solid var(--vs-border);
+}
+
+.modal-header h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--vs-accent-red);
+    margin: 0;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    color: var(--vs-text-secondary);
+    font-size: 20px;
+    cursor: pointer;
+    padding: 4px;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 2px;
+    transition: var(--transition);
+}
+
+.modal-close:hover {
+    background: var(--vs-bg-darker);
+    color: var(--vs-text-primary);
+}
+
+.modal-body {
+    padding: 20px;
+    color: var(--vs-text-primary);
+    line-height: 1.5;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.modal-footer {
+    padding: 16px 20px;
+    background: var(--vs-bg-light);
+    border-top: 1px solid var(--vs-border);
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.btn {
+    padding: 8px 16px;
+    border: 1px solid var(--vs-border);
+    background: var(--vs-bg-dark);
+    color: var(--vs-text-primary);
+    cursor: pointer;
+    border-radius: var(--border-radius);
+    font-size: 12px;
+    font-weight: 500;
+    transition: var(--transition);
+    min-width: 80px;
+}
+
+.btn:hover {
+    background: var(--vs-bg-light);
+}
+
+.btn.btn-primary {
+    background: var(--vs-accent-blue);
+    border-color: var(--vs-accent-blue);
+    color: white;
+}
+
+.btn.btn-primary:hover {
+    background: var(--vs-accent-blue-hover);
+    border-color: var(--vs-accent-blue-hover);
+}
+
+/* ============================================================================
+   애니메이션
+   ============================================================================ */
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+@keyframes pulse-error {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
+/* ============================================================================
+   반응형 디자인
+   ============================================================================ */
+
+@media (max-width: 768px) {
+    #top-menu-bar {
+        padding: 0 12px;
+    }
+    
+    .menu-section {
+        gap: 16px;
+    }
+    
+    .menu-buttons {
+        gap: 6px;
+    }
+    
+    .menu-btn {
+        padding: 6px 12px;
+        min-width: 100px;
+        font-size: 11px;
+    }
+    
+    .menu-btn .text {
+        display: none;
+    }
+    
+    .modal-content {
+        width: 95%;
+        margin: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .menu-title {
+        display: none;
+    }
+    
+    .status-indicator {
+        padding: 4px 8px;
+    }
+    
+    .status-text {
+        display: none;
+    }
+}
+
+/* ============================================================================
+   스크롤바 스타일 (WebKit)
+   ============================================================================ */
+
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--vs-bg-darker);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--vs-border);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--vs-text-muted);
+}
+
+::-webkit-scrollbar-corner {
+    background: var(--vs-bg-darker);
+}
