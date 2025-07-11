@@ -296,10 +296,63 @@ export function getStorageInfo() {
     }
 }
 
+/**
+ * rawData 존재 여부 확인
+ * @param {string} storageKey - 저장소 키 (기본값: 'chartData')
+ * @returns {boolean} 데이터 존재 여부
+ */
+export function hasRawData(storageKey = 'chartData') {
+    try {
+        const dataString = sessionStorage.getItem(storageKey);
+        const metaString = sessionStorage.getItem(`${storageKey}_meta`);
+        
+        if (!dataString || !metaString) {
+            return false;
+        }
+        
+        // 간단한 유효성 검사
+        const data = JSON.parse(dataString);
+        const meta = JSON.parse(metaString);
+        
+        return Array.isArray(data) && data.length > 0 && 
+               meta && meta.fieldNames && Array.isArray(meta.fieldNames);
+               
+    } catch (error) {
+        console.warn('[CONFIG_STORAGE] hasRawData 확인 중 오류:', error);
+        return false;
+    }
+}
+
+/**
+ * chartConfig 존재 여부 확인
+ * @param {string} storageKey - 저장소 키 (기본값: 'chartConfig')
+ * @returns {boolean} 설정 존재 여부
+ */
+export function hasChartConfig(storageKey = 'chartConfig') {
+    try {
+        const configString = sessionStorage.getItem(storageKey);
+        
+        if (!configString) {
+            return false;
+        }
+        
+        // 간단한 유효성 검사
+        const config = JSON.parse(configString);
+        return config && typeof config === 'object' && 
+               config.type && config.dataMapping;
+               
+    } catch (error) {
+        console.warn('[CONFIG_STORAGE] hasChartConfig 확인 중 오류:', error);
+        return false;
+    }
+}
+
 export default {
     saveChartConfig,
     loadChartConfig,
     clearAllChartData,
     clearSpecificStorage,
-    getStorageInfo
+    getStorageInfo,
+    hasRawData,        // 추가
+    hasChartConfig     // 추가
 };

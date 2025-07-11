@@ -2,8 +2,8 @@
 // pages/main/main.js - 메인 페이지 초기화 및 이벤트 관리
 // ============================================================================
 
-import { GoldenLayoutManager } from '../../layout/golden-layout.js';
-import { WindowManager } from '../../layout/window-manager.js';
+import { GoldenLayoutManager } from '../../layout/goldenLayout.js';
+import { WindowManager } from '../../layout/windowManager.js';
 import { sessionStorageManager } from '../../sources/shared/session_storage_manager/index.js';
 
 // 전역 매니저 인스턴스
